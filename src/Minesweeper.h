@@ -21,4 +21,5 @@ private:
     int mineAmount;
     void CreateEmptyBoard();
     void RandomizeMinePlacement();
+    int CheckAroundCell(int, int);
 };

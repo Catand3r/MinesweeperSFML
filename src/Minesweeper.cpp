@@ -29,7 +29,7 @@ void Minesweeper::Run()
         }
         else
         {
-            std::cout << "Na wspolrzednych: " << x << " i " << y << " jest pusto. Grasz dalej\n";
+            std::cout << "Na wspolrzednych: " << x << " i " << y << " jest pusto, a wokol sa " << CheckAroundCell(x, y) << " miny. Grasz dalej\n";
         }
     }
 }
@@ -59,4 +59,50 @@ void Minesweeper::RandomizeMinePlacement()
             }
         }
     }
+}
+
+int Minesweeper::CheckAroundCell(int x, int y)
+{
+    int mineAroundAmount = 0;
+    if (cells_[x][y + 1] == CellState::mine && x >= 0 && y + 1 >= 0)
+    {
+        std::cout << "Na " << x << " " << y + 1 << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x][y - 1] == CellState::mine && x >= 0 && y - 1 >= 0)
+    {
+        std::cout << "Na " << x << " " << y - 1 << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x + 1][y] == CellState::mine && x + 1 >= 0 && y >= 0)
+    {
+        std::cout << "Na " << x + 1 << " " << y << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x - 1][y] == CellState::mine && x - 1 >= 0 && y >= 0)
+    {
+        std::cout << "Na " << x - 1 << " " << y << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x + 1][y + 1] == CellState::mine && x + 1 >= 0 && y + 1 >= 0)
+    {
+        std::cout << "Na " << x + 1 << " " << y + 1 << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x + 1][y - 1] == CellState::mine && x + 1 >= 0 && y - 1 >= 0)
+    {
+        std::cout << "Na " << x + 1 << " " << y - 1 << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x - 1][y + 1] == CellState::mine && x - 1 >= 0 && y + 1 >= 0)
+    {
+        std::cout << "Na " << x - 1 << " " << y + 1 << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    if (cells_[x - 1][y - 1] == CellState::mine && x - 1 >= 0 && y - 1 >= 0)
+    {
+        std::cout << "Na " << x - 1 << " " << y - 1 << " jest mina.\n";
+        mineAroundAmount++;
+    }
+    return mineAroundAmount;
 }
