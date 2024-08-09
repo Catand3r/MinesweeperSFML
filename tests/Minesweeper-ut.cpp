@@ -1,6 +1,6 @@
 #include "../src/Minesweeper.h"
 #include "gtest/gtest.h"
-#include "gmock/gmock.h"
+#include <gmock/gmock.h>
 #include <iostream>
 #include <utility>
 
