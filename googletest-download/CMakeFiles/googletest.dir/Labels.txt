@@ -1,0 +1,14 @@
+# Target labels
+ googletest
+# Source files and their labels
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/CMakeFiles/googletest
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/CMakeFiles/googletest.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/CMakeFiles/googletest-complete.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-build.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-configure.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-download.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-install.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-mkdir.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-patch.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-test.rule
+/Users/paulziemann/Documents/C++ Projects/CalculatorAsClass/googletest-download/googletest-prefix/src/googletest-stamp/googletest-update.rule
