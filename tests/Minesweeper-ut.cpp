@@ -44,6 +44,17 @@ protected:
     MockRandomEngine *randomEngineMock_;
 };
 
+struct MinesweeperTestParameters
+{
+    MinePositions minePositions;
+    Position userPosition;
+    bool result;
+};
+
+class MinesweeperParametricTests : public ::testing::TestWithParam<MinesweeperTestParameters>
+{
+};
+
 TEST_F(MinesweeperTests, ShouldCallOnResultMineWhenUserPositionIsEqualToMinePosition)
 {
     MinePositions minePositions{{0, 1}};
@@ -85,3 +96,38 @@ TEST_F(MinesweeperTests, ShouldThrowExceptionWhenUserPositionIsIncorrect)
 
     EXPECT_ANY_THROW(ms.Run());
 }
+
+TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCalledThenPropertyResultShouldBeReturn)
+{
+    MinesweeperTestParameters params = GetParam();
+
+    MinePositions minePositions = params.minePositions;
+    Position userPosition = params.userPosition;
+    bool result = params.result;
+
+    MockUserInput *userInputMock_;
+    MockRandomEngine *randomEngineMock_;
+
+    userInputMock_ = new MockUserInput();
+    randomEngineMock_ = new MockRandomEngine();
+
+    EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_)).WillOnce(Return(minePositions));
+    if (result)
+        EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_));
+    else
+        EXPECT_CALL(*userInputMock_, OnResultMine(userPosition.first, userPosition.second));
+
+    Minesweeper ms(userInputMock_, randomEngineMock_);
+
+    EXPECT_EQ(ms.Run(), result);
+
+    delete userInputMock_;
+    delete randomEngineMock_;
+}
+
+INSTANTIATE_TEST_SUITE_P(GivenMinePositionsAndUserPositionWhenRunIsCalledThenPropertyResultShouldBeReturn,
+                         MinesweeperParametricTests,
+                         ::testing::Values(
+                             MinesweeperTestParameters{{{0, 1}}, {1, 0}, true},
+                             MinesweeperTestParameters{{{0, 1}}, {0, 1}, false}));
