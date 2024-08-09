@@ -1,0 +1,30 @@
+name: C CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: makeBuild
+      working-directory: .
+      run: mkdir build
+    - name: CMake generation
+      working-directory: .
+      run: cd build && cmake ..
+    - name: Compilation
+      working-directory: .
+      run: cd lib && ls && cd .. && cd build && make
+    - name: runTests
+      working-directory: .
+      run: |
+          export DISPLAY=:99
+          sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+          cd build && ctest -V
