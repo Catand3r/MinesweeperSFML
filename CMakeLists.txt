@@ -6,14 +6,14 @@ set(CMAKE_CXX_STANDARD 20)
 
 # CMAKE_LINK_DIRECTORIES_BEFORE = ON
 
-include_directories(./)
+include_directories(./ ../)
 if(APPLE)
     link_directories(BEFORE ./lib/MacOS)
 elseif(UNIX)
     link_directories(./lib/Linux)
 endif(APPLE)
 
-add_executable(Minesweeper src/main.cpp src/Minesweeper.cpp)
+add_executable(Minesweeper src/main.cpp src/Minesweeper.cpp src/SFMLUserInput.cpp)
 
 if(APPLE)
     target_link_libraries(Minesweeper

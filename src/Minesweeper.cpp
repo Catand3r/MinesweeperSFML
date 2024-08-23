@@ -14,6 +14,8 @@ Minesweeper::Minesweeper(IUserInput *userInput, IRandomEngine *randomEngine) : u
     CreateEmptyBoard();
     minePostitions_ = randomEngine_->RandomizeMinePlacement(cells_, mineAmount);
     PlaceMines();
+
+    userInput->Init(cells_, minePostitions_);
 }
 
 bool Minesweeper::Run()
@@ -122,4 +124,9 @@ void KeyboardUserInput::OnResultEmpty(int x, int y, int minesAroundCell)
 void KeyboardUserInput::OnResultMine(int x, int y)
 {
     std::cout << "Na wspolrzednych: " << x << " i " << y << " jest mina. Przegrywasz";
+}
+
+bool KeyboardUserInput::Init(const Cells &, const MinePositions &)
+{
+    return true;
 }

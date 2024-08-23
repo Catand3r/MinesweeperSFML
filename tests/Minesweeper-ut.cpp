@@ -16,6 +16,7 @@ class MockUserInput : public IUserInput
 {
 public:
     MOCK_METHOD(Position, GetPos, (), (override));
+    MOCK_METHOD(bool, Init, (const Cells &, const MinePositions &), (override));
     MOCK_METHOD(void, OnResultEmpty, (int, int, int), (override));
     MOCK_METHOD(void, OnResultMine, (int, int), (override));
 };
