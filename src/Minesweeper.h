@@ -13,8 +13,6 @@ enum class Result
 
 using Cells = std::array<std::array<CellState, 8>, 10>;
 
-using MinePositions = std::vector<Position>;
-
 class KeyboardUserInput : public IUserInput
 {
 public:

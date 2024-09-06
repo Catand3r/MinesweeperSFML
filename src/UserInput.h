@@ -1,5 +1,7 @@
 #pragma once
 #include <utility>
+#include <array>
+#include <vector>
 
 enum class CellState
 {
