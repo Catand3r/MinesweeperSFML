@@ -33,9 +33,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup CMake
-      uses: actions/setup-cmake@v3
-    - name: CMake generation
+    - name: Install CMake
+      run: |
+        choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' || exit 1
+    - name: CMake Generation
       run: cmake -S . -B build -G "Visual Studio 17 2022"
     - name: Build Solution
       run: |
