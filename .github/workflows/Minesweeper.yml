@@ -33,6 +33,9 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Install Visual Studio Build Tools
+      run: |
+        choco install visualstudio2022buildtools --version 17.7.0 --params '/IncludeRecommended' || exit 1
     - name: Install CMake
       run: |
         choco install cmake --installargs 'ADD_CMAKE_TO_PATH=System' || exit 1
@@ -40,7 +43,7 @@ jobs:
       run: cmake -S . -B build -G "Visual Studio 17 2022"
     - name: Build Solution
       run: |
-        msbuild MinesweeperVS/MinesweeperVS.sln /p:Configuration=Release /p:Platform=x64
+        & "C:\Program Files\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe" MinesweeperVS\MinesweeperVS.sln /p:Configuration=Release /p:Platform=x64
     - name: Run Tests
       run: |
         cd MinesweeperVS\x64\Release
