@@ -19,6 +19,9 @@ public:
     MOCK_METHOD(bool, Init, (const Cells &, const MinePositions &), (override));
     MOCK_METHOD(void, OnResultEmpty, (int, int, int), (override));
     MOCK_METHOD(void, OnResultMine, (int, int), (override));
+    MOCK_METHOD(bool, PollEvent, (), (override));
+    MOCK_METHOD(void, Delay, (), (const override));
+
 };
 
 class MinesweeperTests : public ::testing::Test
@@ -65,6 +68,7 @@ TEST_F(MinesweeperTests, ShouldCallOnResultMineWhenUserPositionIsEqualToMinePosi
     EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
     EXPECT_CALL(*userInputMock_, OnResultMine(userPosition.first, userPosition.second)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
+    EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(true));
 
     Minesweeper ms = CreateSut();
     const bool runResult = ms.Run();
@@ -81,6 +85,7 @@ TEST_F(MinesweeperTests, ShouldCallOnResultEmptyWhenUserPositionIsDifferentThanM
     EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
     EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
+    EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(true));
 
     Minesweeper ms = CreateSut();
     const bool runResult = ms.Run();
@@ -95,10 +100,26 @@ TEST_F(MinesweeperTests, ShouldThrowExceptionWhenUserPositionIsIncorrect)
     EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
     EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
+    EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(true));
 
     Minesweeper ms = CreateSut();
 
     EXPECT_ANY_THROW(ms.Run());
+}
+
+TEST_F(MinesweeperTests, ShouldCallDelayAndReturnTrueWhenUserPositionIsNotGiven)
+{
+    Position userPosition{ -1, -1 };
+
+    EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_));
+    EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
+    EXPECT_CALL(*userInputMock_, Delay());
+    EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(true));
+
+    Minesweeper ms = CreateSut();
+
+    EXPECT_TRUE(ms.Run());
 }
 
 TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCalledThenPropertyResultShouldBeReturn)
@@ -118,6 +139,7 @@ TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCal
     EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
     EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(true));
     if (result)
         EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_));
     else

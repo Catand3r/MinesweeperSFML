@@ -3,13 +3,13 @@
 
 SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(320, 400), "Minesweeper")
 {
-
+    
 }
 
 Position SFMLUserInput::GetPos()
 {
 
-    return {0, 0};
+    return {-1, -1};
 }
 
 void SFMLUserInput::OnResultEmpty(int, int, int)
@@ -22,14 +22,14 @@ void SFMLUserInput::OnResultMine(int x, int y)
     gcells_[x][y] = makeRectangle(cellSizeX, cellSizeY, cellSizeX * x, cellSizeY * y, sf::Color::Red);
 }
 
-bool SFMLUserInput::Init(const Cells& cells_, const MinePositions&)
+bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
 {
-    cellSizeX = static_cast<float>(window_.getSize().x) / static_cast<float>(cells_.size());
+    cells_ = &cells;
+    cellSizeX = static_cast<float>(window_.getSize().x) / static_cast<float>(cells_->size());
     cellSizeY = static_cast<float>(window_.getSize().y) / static_cast<float>(cells_[0].size());
-    cells = cells_;
-    for (int i = 0; i < cells_.size(); i++)
+    for (int i = 0; i < cells_->size(); i++)
     {
-        for (int j = 0; j < cells_[i].size(); j++)
+        for (int j = 0; j < cells_->at(i).size(); j++)
         {
             gcells_[i][j] = makeRectangle(cellSizeX, cellSizeY, cellSizeX * i, cellSizeY * j);
         }
@@ -43,13 +43,7 @@ void SFMLUserInput::Draw()
     while (window_.isOpen())
     {
         // Event processing
-        sf::Event event;
-        while (window_.pollEvent(event))
-        {
-            // Request for closing the window
-            if (event.type == sf::Event::Closed)
-                window_.close();
-        }
+        
 
         // Clear the whole window before rendering a new frame
         window_.clear();
@@ -73,7 +67,7 @@ void SFMLUserInput::GCellsUpdate()
     {
         for (int j = 0; j < gcells_[i].size(); j++)
         {
-            if (cells[i][j] == CellState::uncovered)
+            if (cells_->at(i).at(j) == CellState::uncovered)
             {
                 gcells_[i][j] = makeRectangle(cellSizeX, cellSizeY, i * cellSizeX, j * cellSizeY, sf::Color::Green);
             }
@@ -93,4 +87,24 @@ sf::RectangleShape SFMLUserInput::makeRectangle(float sizeX, float sizeY, float 
     rect.setFillColor(color);
     rect.setPosition(sf::Vector2f(posX, posY));
     return rect;
+}
+
+bool SFMLUserInput::PollEvent()
+{
+    sf::Event event;
+    while (window_.pollEvent(event))
+    {
+        // Request for closing the window
+        if (event.type == sf::Event::Closed)
+        {
+            window_.close();
+            return false;
+        }
+    }
+    return true;
+}
+
+void SFMLUserInput::Delay() const
+{
+    sf::sleep(sf::milliseconds(100));
 }

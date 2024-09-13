@@ -25,4 +25,8 @@ public:
 
     virtual void OnResultEmpty(int, int, int) = 0;
     virtual void OnResultMine(int, int) = 0;
+
+    virtual bool PollEvent() { return true; }
+
+    virtual void Delay() const { };
 };

@@ -20,7 +20,16 @@ mineAmount(10)
 
 bool Minesweeper::Run()
 {
+	bool isOpen = userInput_->PollEvent();
+	if (!isOpen)
+		return false;
+
 	auto [x, y] = userInput_->GetPos();
+	if (x == -1 && y == -1)
+	{
+		userInput_->Delay();
+		return true;
+	}
 	if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
 	{
 		throw std::out_of_range("User input is out of range\n");
