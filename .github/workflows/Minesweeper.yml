@@ -7,8 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  build-linux:
     runs-on: ubuntu-latest
 
     steps:
@@ -28,3 +27,20 @@ jobs:
           export DISPLAY=:99
           sudo Xvfb -ac :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
           cd build && ctest -V
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup CMake
+      uses: actions/setup-cmake@v3
+    - name: CMake generation
+      run: cmake -S . -B build -G "Visual Studio 17 2022"
+    - name: Build Solution
+      run: |
+        msbuild MinesweeperVS/MinesweeperVS.sln /p:Configuration=Release /p:Platform=x64
+    - name: Run Tests
+      run: |
+        cd MinesweeperVS\x64\Release
+        .\MinesweeperVS-tests.exe
