@@ -4,3 +4,5 @@ build/
 .vs
 x64
 packages/
+Debug/
+Release/

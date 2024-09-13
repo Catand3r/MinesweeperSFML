@@ -6,7 +6,8 @@
 enum class CellState
 {
     empty = 0,
-    mine
+    mine,
+    uncovered
 };
 
 using Position = std::pair<int, int>;
