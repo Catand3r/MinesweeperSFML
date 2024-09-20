@@ -28,5 +28,5 @@ public:
 
     virtual bool PollEvent() { return true; }
 
-    virtual void Delay() const { };
+    virtual void Delay(int) const { };
 };

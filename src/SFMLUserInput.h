@@ -20,14 +20,15 @@ public:
     
     virtual bool PollEvent() override;
 
-    virtual void Delay() const override;
+    virtual void Delay(int) const override;
 
 private:
     sf::RenderWindow window_;
     GCells gcells_;
     const Cells* cells_ = nullptr;
-    float cellSizeX = 0.0f;
-    float cellSizeY = 0.0f;
+    float cellSizeX_ = 0.0f;
+    float cellSizeY_ = 0.0f;
+    bool isButtonPressed_;
 
     sf::RectangleShape makeRectangle(float, float, float, float, sf::Color = sf::Color::White);
     void Draw();

@@ -27,7 +27,7 @@ bool Minesweeper::Run()
 	auto [x, y] = userInput_->GetPos();
 	if (x == -1 && y == -1)
 	{
-		userInput_->Delay();
+		userInput_->Delay(100);
 		return true;
 	}
 	if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
@@ -37,6 +37,7 @@ bool Minesweeper::Run()
 	if (cells_[x][y] == CellState::mine)
 	{
 		userInput_->OnResultMine(x, y);
+		userInput_->Delay(1000);
 		return false;
 	}
 	else
