@@ -2,7 +2,5 @@ build/
 .DS_Store
 .vscode
 .vs
-x64
+x64/
 packages/
-Debug/
-Release/
