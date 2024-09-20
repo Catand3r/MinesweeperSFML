@@ -20,7 +20,7 @@ public:
     MOCK_METHOD(void, OnResultEmpty, (int, int, int), (override));
     MOCK_METHOD(void, OnResultMine, (int, int), (override));
     MOCK_METHOD(bool, PollEvent, (), (override));
-    MOCK_METHOD(void, Delay, (), (const override));
+    MOCK_METHOD(void, Delay, (int), (const override));
 
 };
 
@@ -114,7 +114,7 @@ TEST_F(MinesweeperTests, ShouldCallDelayAndReturnTrueWhenUserPositionIsNotGiven)
     EXPECT_CALL(*userInputMock_, GetPos()).WillOnce(Return(userPosition));
     EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
-    EXPECT_CALL(*userInputMock_, Delay());
+    EXPECT_CALL(*userInputMock_, Delay(testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(true));
 
     Minesweeper ms = CreateSut();
