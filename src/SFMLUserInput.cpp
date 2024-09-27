@@ -2,9 +2,10 @@
 #include "SFMLUserInput.h"
 #include "SFML/Graphics.hpp"
 
-SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(320, 400), "Minesweeper")
+
+SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 320), "Minesweeper")
 {
-    
+    font_.loadFromFile("../fonts/comic.ttf");
 }
 
 Position SFMLUserInput::GetPos()
@@ -12,67 +13,92 @@ Position SFMLUserInput::GetPos()
     if (isButtonPressed_)
     {
         sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
-        int x = mousePosition.x / cellSizeX_;
-        int y = mousePosition.y / cellSizeY_;
+        int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
+        int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
         return { x, y };
     }
 
     return {-1, -1};
 }
 
-void SFMLUserInput::OnResultEmpty(int, int, int)
+void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 {
+    GraphicCellsUpdate();
+    std::cout << "Wokol pola jest: " << std::to_string(mineAroundCell) << " min\n";
+    graphicCells_[x][y].mineAmountText_.setString(std::to_string(mineAroundCell));
     Draw();
 }
 
 void SFMLUserInput::OnResultMine(int x, int y)
 {
-    gcells_[x][y] = makeRectangle(cellSizeX_, cellSizeY_, cellSizeX_ * x, cellSizeY_ * y, sf::Color::Red);
+    graphicCells_[x][y].cellShape_.setFillColor(sf::Color::Red);
+    Draw();
 }
 
 bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
 {
     cells_ = &cells;
-    int windowSizeX = cells_->size() * 20;
-    int windowSizeY = cells_->at(0).size() * 20;
-    std::cout << "Okno ma rozmiar: " << windowSizeX << " " << windowSizeY << ".\n";
+    int windowSizeX = static_cast<int>(cells_->size()) * 40;
+    int windowSizeY = static_cast<int>(cells_->at(0).size())* 40;
     window_.setSize(sf::Vector2u(windowSizeX, windowSizeY));
-    cellSizeX_ = static_cast<float>(window_.getSize().x) / static_cast<float>(cells_->size());
-    cellSizeY_ = static_cast<float>(window_.getSize().y) / static_cast<float>(cells_[0].size());
-    GCellsUpdate();
+    cellSize_ = static_cast<float>(window_.getSize().x) / static_cast<float>(cells_->size());
+    GraphicCellsMake();
+    Draw();
     return true;
 }
 
 void SFMLUserInput::Draw()
 {
-    GCellsUpdate();
         window_.clear();
 
-        for (int i = 0; i < gcells_.size(); i++)
+        for (int i = 0; i < graphicCells_.size(); i++)
         {
-            for (int j = 0; j < gcells_[i].size(); j++)
+            for (int j = 0; j < graphicCells_[i].size(); j++)
             {
-                window_.draw(gcells_[i][j]);
+                window_.draw(graphicCells_[i][j].cellShape_);
+                window_.draw(graphicCells_[i][j].mineAmountText_);
             }
         }
         window_.display();
 }
 
-void SFMLUserInput::GCellsUpdate()
+void SFMLUserInput::GraphicCellsMake()
 {
-    for (int i = 0; i < gcells_.size(); i++)
+    for (int i = 0; i < graphicCells_.size(); i++)
     {
-        for (int j = 0; j < gcells_[i].size(); j++)
+        for (int j = 0; j < graphicCells_[i].size(); j++)
         {
             if (cells_->at(i).at(j) == CellState::uncovered)
             {
-                gcells_[i][j] = makeRectangle(cellSizeX_, cellSizeY_, i * cellSizeX_, j * cellSizeY_, sf::Color::Green);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSizeX_ << " " << j * cellSizeY_ << ".\n";
+                graphicCells_[i][j].mineAmountText_ = makeText(cellSize_ , "", i * cellSize_, j * cellSize_, sf::Color::Black);
+                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Green);
+                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
             else
             {
-                gcells_[i][j] = makeRectangle(cellSizeX_, cellSizeY_, i * cellSizeX_, j * cellSizeY_, sf::Color::White);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSizeX_ << " " << j * cellSizeY_ << ".\n";
+                graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, j * cellSize_, sf::Color::Black);
+                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::White);
+                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
+            }
+        }
+    }
+}
+
+void SFMLUserInput::GraphicCellsUpdate()
+{
+    for (int i = 0; i < graphicCells_.size(); i++)
+    {
+        for (int j = 0; j < graphicCells_[i].size(); j++)
+        {
+            if (cells_->at(i).at(j) == CellState::uncovered)
+            {
+                graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Green);
+                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
+            }
+            else
+            {
+                graphicCells_[i][j].cellShape_.setFillColor(sf::Color::White);
+                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
         }
     }
@@ -84,8 +110,20 @@ sf::RectangleShape SFMLUserInput::makeRectangle(float sizeX, float sizeY, float 
     sf::RectangleShape rect;
     rect.setSize(sf::Vector2f(sizeX, sizeY));
     rect.setFillColor(color);
+    rect.setOutlineThickness(2.0f);
+    rect.setOutlineColor(sf::Color::Black);
     rect.setPosition(sf::Vector2f(posX, posY));
     return rect;
+}
+
+sf::Text SFMLUserInput::makeText(int size, std::string textString, float x, float y, sf::Color color)
+{
+    sf::Text text("", font_);
+    text.setCharacterSize(size);
+    text.setString(textString);
+    text.setFillColor(color);
+    text.setPosition(sf::Vector2f(x, y));
+    return text;
 }
 
 bool SFMLUserInput::PollEvent()

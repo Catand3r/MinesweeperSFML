@@ -1,7 +1,16 @@
 #include "UserInput.h"
 #include "SFML/Graphics.hpp"
+#include <optional>
+#include <string>
 
-using GCells = std::array<std::array<sf::RectangleShape, 8>, 10>;
+struct GraphicCell
+{
+public:
+    sf::RectangleShape cellShape_;
+    sf::Text mineAmountText_;
+};
+
+using GraphicCells = std::array<std::array<GraphicCell, 8>, 10>;
 
 class SFMLUserInput : public IUserInput
 {
@@ -23,14 +32,15 @@ public:
     virtual void Delay(int) const override;
 
 private:
+    sf::Font font_;
     sf::RenderWindow window_;
-    GCells gcells_;
+    GraphicCells graphicCells_;
     const Cells* cells_ = nullptr;
-    float cellSizeX_ = 0.0f;
-    float cellSizeY_ = 0.0f;
+    float cellSize_ = 40.0f;
     bool isButtonPressed_;
-
     sf::RectangleShape makeRectangle(float, float, float, float, sf::Color = sf::Color::White);
+    sf::Text makeText(int, std::string, float, float, sf::Color = sf::Color::White);
     void Draw();
-    void GCellsUpdate();
+    void GraphicCellsUpdate();
+    void GraphicCellsMake();
 };
