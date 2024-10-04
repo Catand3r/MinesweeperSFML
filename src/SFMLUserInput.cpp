@@ -5,20 +5,30 @@
 
 SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 320), "Minesweeper")
 {
-    font_.loadFromFile("../fonts/comic.ttf");
+    
 }
 
-Position SFMLUserInput::GetPos()
+Action SFMLUserInput::MakeAction()
 {
-    if (isButtonPressed_)
+    Action action;
+    if (ActionType_ == ActionType::CheckCell)
     {
+        action.actionType_ = ActionType::CheckCell;
         sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
         int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
         int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
-        return { x, y };
+        action.playerPos_ = { x, y };
+    }
+    else if (ActionType_ == ActionType::MarkCell)
+    {
+        action.actionType_ = ActionType::MarkCell;
+        sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
+        int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
+        int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
+        action.playerPos_ = { x, y };
     }
 
-    return {-1, -1};
+    return action;
 }
 
 void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
@@ -35,8 +45,18 @@ void SFMLUserInput::OnResultMine(int x, int y)
     Draw();
 }
 
+void SFMLUserInput::OnMarkCell(int x, int y)
+{
+    GraphicCellsUpdate();
+    Draw();
+}
+
 bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
 {
+    if (!font_.loadFromFile("../fonts/comic.ttf"))
+    {
+        return false;
+    }
     cells_ = &cells;
     int windowSizeX = static_cast<int>(cells_->size()) * 40;
     int windowSizeY = static_cast<int>(cells_->at(0).size())* 40;
@@ -74,6 +94,12 @@ void SFMLUserInput::GraphicCellsMake()
                 graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Green);
                 std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
+            else if (cells_->at(i).at(j) == CellState::marked)
+            {
+                graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, j * cellSize_, sf::Color::Black);
+                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Yellow);
+                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
+            }
             else
             {
                 graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, j * cellSize_, sf::Color::Black);
@@ -94,6 +120,10 @@ void SFMLUserInput::GraphicCellsUpdate()
             {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Green);
                 std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
+            }
+            else if (cells_->at(i).at(j) == CellState::marked)
+            {
+                graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Yellow);
             }
             else
             {
@@ -129,21 +159,28 @@ sf::Text SFMLUserInput::makeText(int size, std::string textString, float x, floa
 bool SFMLUserInput::PollEvent()
 {
     sf::Event event;
-    while (window_.pollEvent(event))
+    sf::Clock eventTimer;
+
+    ActionType_ = ActionType::None;
+    while (window_.pollEvent(event) && ActionType_ == ActionType::None && eventTimer.getElapsedTime() < sf::milliseconds( 100))
     {
-        // Request for closing the window
+        // Request for closing the windows
         if (event.type == sf::Event::Closed)
         {
             window_.close();
             return false;
         }
-        else if (event.type == sf::Event::MouseButtonPressed)
+        else if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            isButtonPressed_ = true;
+            ActionType_ = ActionType::CheckCell;
+        }
+        else if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Right))
+        {
+            ActionType_ = ActionType::MarkCell;
         }
         else if (event.type == sf::Event::MouseButtonReleased)
         {
-            isButtonPressed_ = false;
+            ActionType_ = ActionType::None;
         }
     }
     return true;

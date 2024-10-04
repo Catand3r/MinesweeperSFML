@@ -5,6 +5,7 @@
 #include <array>
 #include <vector>
 
+
 enum class Result
 {
     empty = 0,
@@ -18,7 +19,7 @@ class KeyboardUserInput : public IUserInput
 public:
     ~KeyboardUserInput() override = default;
 
-    Position GetPos() override;
+    Action MakeAction() override;
 
     bool Init(const Cells &, const MinePositions &) override;
     void OnResultEmpty(int, int, int) override;
@@ -54,7 +55,7 @@ private:
     void Draw();
     void CreateEmptyBoard();
     void PlaceMines();
-    int flagAmount;
+    int flagAmount_;
     int mineAmount;
     int CheckAroundCell(int, int);
     MinePositions minePostitions_;

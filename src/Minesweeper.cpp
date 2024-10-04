@@ -8,7 +8,7 @@
 
 Minesweeper::Minesweeper(IUserInput* userInput, IRandomEngine* randomEngine) : userInput_(userInput),
 randomEngine_(randomEngine),
-flagAmount(10),
+flagAmount_(10),
 mineAmount(10)
 {
 	CreateEmptyBoard();
@@ -23,27 +23,49 @@ bool Minesweeper::Run()
 	bool isOpen = userInput_->PollEvent();
 	if (!isOpen)
 		return false;
-
-	auto [x, y] = userInput_->GetPos();
-	if (x == -1 && y == -1)
+	if (userInput_->MakeAction().actionType_ == ActionType::CheckCell)
 	{
-		userInput_->Delay(100);
-		return true;
+		auto [x, y] = userInput_->MakeAction().playerPos_;
+		if (x == -1 && y == -1)
+		{
+			userInput_->Delay(100);
+			return true;
+		}
+		if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
+		{
+			throw std::out_of_range("User input is out of range\n");
+		}
+		if (cells_[x][y] == CellState::mine)
+		{
+			userInput_->OnResultMine(x, y);
+			userInput_->Delay(1000);
+			return false;
+		}
+		else
+		{
+			cells_[x][y] = CellState::uncovered;
+			userInput_->OnResultEmpty(x, y, CheckAroundCell(x, y));
+			return true;
+		}
 	}
-	if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
+	else if (userInput_->MakeAction().actionType_ == ActionType::MarkCell)
 	{
-		throw std::out_of_range("User input is out of range\n");
-	}
-	if (cells_[x][y] == CellState::mine)
-	{
-		userInput_->OnResultMine(x, y);
-		userInput_->Delay(1000);
-		return false;
-	}
-	else
-	{
-		cells_[x][y] = CellState::uncovered;
-		userInput_->OnResultEmpty(x, y, CheckAroundCell(x, y));
+		auto [x, y] = userInput_->MakeAction().playerPos_;
+		if (x == -1 && y == -1)
+		{
+			userInput_->Delay(100);
+			return true;
+		}
+		if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
+		{
+			throw std::out_of_range("User input is out of range\n");
+		}
+		if (cells_[x][y] != CellState::marked && cells_[x][y] != CellState::uncovered && flagAmount_ > 0)
+		{
+			cells_[x][y] = CellState::marked;
+			userInput_->OnMarkCell(x, y);
+			flagAmount_--;
+		}
 		return true;
 	}
 }
@@ -120,15 +142,18 @@ MinePositions RandomEngine::RandomizeMinePlacement(Cells cells_, int mineAmount)
 	return result;
 }
 
-Position KeyboardUserInput::GetPos()
+Action KeyboardUserInput::MakeAction()
 {
+	Action action;
 	std::cout << "Wybierz wspolrzedna x: ";
 	int x;
 	std::cin >> x;
 	std::cout << "Wybierz wspolrzedna y: ";
 	int y;
 	std::cin >> y;
-	return { x, y };
+	action.actionType_ = ActionType::CheckCell;
+	action.playerPos_ = { x, y };
+	return action;
 }
 
 void KeyboardUserInput::OnResultEmpty(int x, int y, int minesAroundCell)
