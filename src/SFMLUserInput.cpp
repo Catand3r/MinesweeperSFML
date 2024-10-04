@@ -11,7 +11,6 @@ SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 320), "Minesweeper")
 void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 {
     GraphicCellsUpdate();
-    std::cout << "Wokol pola jest: " << std::to_string(mineAroundCell) << " min\n";
     graphicCells_[x][y].mineAmountText_.setString(std::to_string(mineAroundCell));
     Draw();
 }
@@ -34,6 +33,7 @@ bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
     {
         return false;
     }
+
     cells_ = &cells;
     int windowSizeX = static_cast<int>(cells_->size()) * 40;
     int windowSizeY = static_cast<int>(cells_->at(0).size())* 40;
@@ -41,6 +41,7 @@ bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
     cellSize_ = static_cast<float>(window_.getSize().x) / static_cast<float>(cells_->size());
     GraphicCellsMake();
     Draw();
+    
     return true;
 }
 
@@ -69,19 +70,16 @@ void SFMLUserInput::GraphicCellsMake()
             {
                 graphicCells_[i][j].mineAmountText_ = makeText(cellSize_ , "", i * cellSize_, j * cellSize_, sf::Color::Black);
                 graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Green);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
             else if (cells_->at(i).at(j) == CellState::marked)
             {
                 graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, j * cellSize_, sf::Color::Black);
                 graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Yellow);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
             else
             {
                 graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, j * cellSize_, sf::Color::Black);
                 graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::White);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
         }
     }
@@ -96,7 +94,6 @@ void SFMLUserInput::GraphicCellsUpdate()
             if (cells_->at(i).at(j) == CellState::uncovered)
             {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Green);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
             else if (cells_->at(i).at(j) == CellState::marked)
             {
@@ -105,7 +102,6 @@ void SFMLUserInput::GraphicCellsUpdate()
             else
             {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::White);
-                std::cout << "Pozycja cell numer: " << i << " " << j << " wynosi: " << i * cellSize_ << " " << j * cellSize_ << ".\n";
             }
         }
     }
@@ -138,28 +134,24 @@ Action SFMLUserInput::PollEvent()
     sf::Event event;
     sf::Clock eventTimer;
 
-    Action action;
+    Action action = Action::CreateNoneAction();
 
-    action.actionType_ = ActionType::None;
-    while (window_.pollEvent(event) && action.actionType_ == ActionType::None && eventTimer.getElapsedTime() < sf::milliseconds( 100))
+    while (ShouldReadEvent(event, action, eventTimer));
     {
         if (event.type == sf::Event::Closed)
         {
             action.actionType_ = ActionType::Close;
             window_.close();
+        }
+        else if (event.type == sf::Event::MouseButtonPressed)
+        {
+            Position mousePosition = CalculateMousePosition();
+            action.playerPos_ = mousePosition;
             
-        }
-        else if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
-        {
-            Position mousePosition = CalculateMousePosition();
-            action.playerPos_ = mousePosition;
-            action.actionType_ = ActionType::CheckCell;
-        }
-        else if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Right))
-        {
-            Position mousePosition = CalculateMousePosition();
-            action.playerPos_ = mousePosition;
-            action.actionType_ = ActionType::MarkCell;
+            if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                action.actionType_ = ActionType::CheckCell;
+            else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+                action.actionType_ = ActionType::MarkCell;
         }
         else if (event.type == sf::Event::MouseButtonReleased)
         {
@@ -180,4 +172,9 @@ Position SFMLUserInput::CalculateMousePosition()
 void SFMLUserInput::Delay(int delayTime) const
 {
     sf::sleep(sf::milliseconds(delayTime));
+}
+
+bool SFMLUserInput::ShouldReadEvent(sf::Event& event, Action action, sf::Clock eventTimer)
+{
+    return window_.pollEvent(event) && action.actionType_ == ActionType::None && eventTimer.getElapsedTime() < sf::milliseconds(100);
 }

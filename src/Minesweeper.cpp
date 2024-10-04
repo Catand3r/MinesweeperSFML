@@ -30,45 +30,49 @@ bool Minesweeper::Run()
 		userInput_->Delay(100);
 		return true;
 	}
-	else if (action.actionType_ == ActionType::CheckCell)
+	else
 	{
 		auto [x, y] = action.playerPos_;
 		if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
 		{
 			throw std::out_of_range("User input is out of range\n");
 		}
-		if (cells_[x][y] == CellState::mine)
+		if (action.actionType_ == ActionType::CheckCell)
 		{
-			userInput_->OnResultMine(x, y);
-			userInput_->Delay(1000);
-			return false;
+			return ExecuteCheckCell(x, y);
 		}
-		else
+		else if (action.actionType_ == ActionType::MarkCell)
 		{
-			cells_[x][y] = CellState::uncovered;
-			userInput_->OnResultEmpty(x, y, CheckAroundCell(x, y));
-			return true;
+			return ExecuteMarkCell(x, y);
 		}
 	}
-	else if (action.actionType_ == ActionType::MarkCell)
+	return true;
+}
+
+bool Minesweeper::ExecuteCheckCell(int x, int y)
+{
+	if (cells_[x][y] == CellState::mine)
 	{
-		auto [x, y] = action.playerPos_;
-		if (x == -1 && y == -1)
-		{
-			userInput_->Delay(100);
-			return true;
-		}
-		if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
-		{
-			throw std::out_of_range("User input is out of range\n");
-		}
-		if (cells_[x][y] != CellState::marked && cells_[x][y] != CellState::uncovered && flagAmount_ > 0)
-		{
-			cells_[x][y] = CellState::marked;
-			userInput_->OnMarkCell(x, y);
-			flagAmount_--;
-		}
+		userInput_->OnResultMine(x, y);
+		userInput_->Delay(1000);
+		return false;
+	}
+	else
+	{
+		cells_[x][y] = CellState::uncovered;
+		userInput_->OnResultEmpty(x, y, CheckAroundCell(x, y));
 		return true;
+	}
+	return true;
+}
+
+bool Minesweeper::ExecuteMarkCell(int x, int y)
+{
+	if (cells_[x][y] != CellState::marked && cells_[x][y] != CellState::uncovered && flagAmount_ > 0)
+	{
+		cells_[x][y] = CellState::marked;
+		userInput_->OnMarkCell(x, y);
+		flagAmount_--;
 	}
 	return true;
 }
@@ -111,9 +115,6 @@ int Minesweeper::CheckAroundCell(int x, int y)
 	{
 		if (newX >= 0 && newX < cells_.size() && newY >= 0 && newY < cells_[0].size() && cells_[newX][newY] == CellState::mine)
 		{
-#if _DEBUG
-			std::cout << "Na " << newX << " " << newY << " jest mina.\n";
-#endif
 			mineAroundAmount++;
 		}
 	}
@@ -134,9 +135,6 @@ MinePositions RandomEngine::RandomizeMinePlacement(Cells cells_, int mineAmount)
 				if (std::rand() % randomizationValue == 1 && mineAmount > 0 && cells_[i][j] == CellState::empty)
 				{
 					mineAmount--;
-					#if _DEBUG
-					std::cout << "Postawiono minę na x: " << i << " y: " << j << ", pozostało " << mineAmount << " min\n";
-					#endif
 					result.push_back({ i, j });
 				}
 			}

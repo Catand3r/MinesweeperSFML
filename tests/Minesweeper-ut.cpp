@@ -85,6 +85,7 @@ TEST_F(MinesweeperTests, ShouldCallOnResultMineWhenUserPositionIsEqualToMinePosi
     EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_)).WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, OnResultMine(userPosition.first, userPosition.second)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_));
+    EXPECT_CALL(*userInputMock_, Delay(testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillOnce(Return(action));
 
     Minesweeper ms = CreateSut();

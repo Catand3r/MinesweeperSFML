@@ -41,6 +41,7 @@ private:
     sf::RectangleShape makeRectangle(float, float, float, float, sf::Color = sf::Color::White);
     sf::Text makeText(int, std::string, float, float, sf::Color = sf::Color::White);
     Position CalculateMousePosition();
+    bool ShouldReadEvent(sf::Event&, Action, sf::Clock);
     void Draw();
     void GraphicCellsUpdate();
     void GraphicCellsMake();

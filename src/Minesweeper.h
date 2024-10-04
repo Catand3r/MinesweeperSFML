@@ -56,6 +56,8 @@ private:
     void Draw();
     void CreateEmptyBoard();
     void PlaceMines();
+    [[nodiscard]] bool ExecuteCheckCell(int, int);
+    [[nodiscard]] bool ExecuteMarkCell(int, int);
     int flagAmount_;
     int mineAmount;
     int CheckAroundCell(int, int);

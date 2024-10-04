@@ -28,6 +28,14 @@ using MinePositions = std::vector<Position>;
 struct Action
 {
 public:
+    static Action CreateNoneAction()
+    {
+        Action noneAction;
+        noneAction.actionType_ = ActionType::None;
+
+        return noneAction;
+    }
+
     ActionType actionType_;
     Position playerPos_;
 };
