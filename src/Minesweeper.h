@@ -19,11 +19,12 @@ class KeyboardUserInput : public IUserInput
 public:
     ~KeyboardUserInput() override = default;
 
-    Action MakeAction() override;
+    Action PollEvent() override;
 
     bool Init(const Cells &, const MinePositions &) override;
     void OnResultEmpty(int, int, int) override;
     void OnResultMine(int, int) override;
+    void OnMarkCell(int, int) override;
 };
 
 class IRandomEngine

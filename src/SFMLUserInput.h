@@ -20,15 +20,13 @@ public:
 
     ~SFMLUserInput() override = default;
 
-    virtual Action MakeAction() override;
-
     virtual void OnResultEmpty(int, int, int) override;
     virtual void OnResultMine(int, int) override;
     virtual void OnMarkCell(int, int) override;
 
     virtual bool Init(const Cells&, const MinePositions&) override;
     
-    virtual bool PollEvent() override;
+    virtual Action PollEvent() override;
 
     virtual void Delay(int) const override;
 
@@ -42,6 +40,7 @@ private:
     ActionType ActionType_;
     sf::RectangleShape makeRectangle(float, float, float, float, sf::Color = sf::Color::White);
     sf::Text makeText(int, std::string, float, float, sf::Color = sf::Color::White);
+    Position CalculateMousePosition();
     void Draw();
     void GraphicCellsUpdate();
     void GraphicCellsMake();

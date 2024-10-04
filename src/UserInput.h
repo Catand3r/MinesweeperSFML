@@ -39,15 +39,13 @@ public:
 
     virtual ~IUserInput() = default;
 
-    virtual Action MakeAction() = 0;
-
     virtual bool Init(const Cells &, const MinePositions &) = 0;
 
     virtual void OnResultEmpty(int, int, int) = 0;
     virtual void OnResultMine(int, int) = 0;
     virtual void OnMarkCell(int, int) = 0;
 
-    virtual bool PollEvent() { return true; }
+    virtual Action PollEvent() = 0;
 
     virtual void Delay(int) const { };
 

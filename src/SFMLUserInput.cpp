@@ -8,29 +8,6 @@ SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 320), "Minesweeper")
     
 }
 
-Action SFMLUserInput::MakeAction()
-{
-    Action action;
-    if (ActionType_ == ActionType::CheckCell)
-    {
-        action.actionType_ = ActionType::CheckCell;
-        sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
-        int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
-        int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
-        action.playerPos_ = { x, y };
-    }
-    else if (ActionType_ == ActionType::MarkCell)
-    {
-        action.actionType_ = ActionType::MarkCell;
-        sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
-        int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
-        int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
-        action.playerPos_ = { x, y };
-    }
-
-    return action;
-}
-
 void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 {
     GraphicCellsUpdate();
@@ -156,34 +133,48 @@ sf::Text SFMLUserInput::makeText(int size, std::string textString, float x, floa
     return text;
 }
 
-bool SFMLUserInput::PollEvent()
+Action SFMLUserInput::PollEvent()
 {
     sf::Event event;
     sf::Clock eventTimer;
 
-    ActionType_ = ActionType::None;
-    while (window_.pollEvent(event) && ActionType_ == ActionType::None && eventTimer.getElapsedTime() < sf::milliseconds( 100))
+    Action action;
+
+    action.actionType_ = ActionType::None;
+    while (window_.pollEvent(event) && action.actionType_ == ActionType::None && eventTimer.getElapsedTime() < sf::milliseconds( 100))
     {
-        // Request for closing the windows
         if (event.type == sf::Event::Closed)
         {
+            action.actionType_ = ActionType::Close;
             window_.close();
-            return false;
+            
         }
         else if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Left))
         {
-            ActionType_ = ActionType::CheckCell;
+            Position mousePosition = CalculateMousePosition();
+            action.playerPos_ = mousePosition;
+            action.actionType_ = ActionType::CheckCell;
         }
         else if (event.type == sf::Event::MouseButtonPressed && sf::Mouse::isButtonPressed(sf::Mouse::Right))
         {
-            ActionType_ = ActionType::MarkCell;
+            Position mousePosition = CalculateMousePosition();
+            action.playerPos_ = mousePosition;
+            action.actionType_ = ActionType::MarkCell;
         }
         else if (event.type == sf::Event::MouseButtonReleased)
         {
-            ActionType_ = ActionType::None;
+            action.actionType_ = ActionType::None;
         }
     }
-    return true;
+    return action;
+}
+
+Position SFMLUserInput::CalculateMousePosition()
+{
+    sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
+    int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
+    int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
+    return { x, y };
 }
 
 void SFMLUserInput::Delay(int delayTime) const
