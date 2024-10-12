@@ -9,28 +9,30 @@
 Minesweeper::Minesweeper(IUserInput* userInput, IRandomEngine* randomEngine) : userInput_(userInput),
 randomEngine_(randomEngine),
 flagAmount_(10),
-mineAmount(10)
+mineAmount(10),
+checkAmount_(0)
 {
 	CreateEmptyBoard();
 	minePostitions_ = randomEngine_->RandomizeMinePlacement(cells_, mineAmount);
 	PlaceMines();
 
-	userInput->Init(cells_, minePostitions_);
+	userInput->Init(cells_, minePostitions_, flagAmount_);
 }
 
 bool Minesweeper::Run()
 {
+	bool result = true;
 	Action action = userInput_->PollEvent();
 	if (action.actionType_ == ActionType::Close)
 	{
-		return false;
+		result = false;
 	}
 	else if (action.actionType_ == ActionType::None)
 	{
 		userInput_->Delay(100);
-		return true;
+		result =  true;
 	}
-	else
+	else if (action.actionType_ == ActionType::CheckCell || action.actionType_ == ActionType::MarkCell)
 	{
 		auto [x, y] = action.playerPos_;
 		if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
@@ -39,25 +41,28 @@ bool Minesweeper::Run()
 		}
 		if (action.actionType_ == ActionType::CheckCell)
 		{
-			return ExecuteCheckCell(x, y);
+			checkAmount_++;
+			result = ExecuteCheckCell(x, y);
 		}
 		else if (action.actionType_ == ActionType::MarkCell)
 		{
-			return ExecuteMarkCell(x, y);
+			result = ExecuteMarkCell(x, y);
 		}
 	}
-	return true;
+
+	userInput_->Draw();
+	return result;
 }
 
 bool Minesweeper::ExecuteCheckCell(int x, int y)
 {
-	if (cells_[x][y] == CellState::mine)
+	if (cells_[x][y] == CellState::mine && checkAmount_ >= 2)
 	{
 		userInput_->OnResultMine(x, y);
 		userInput_->Delay(1000);
 		return false;
 	}
-	else
+	else if (cells_[x][y] != CellState::mine || checkAmount_ <= 1)
 	{
 		cells_[x][y] = CellState::uncovered;
 		userInput_->OnResultEmpty(x, y, CheckAroundCell(x, y));
@@ -70,9 +75,9 @@ bool Minesweeper::ExecuteMarkCell(int x, int y)
 {
 	if (cells_[x][y] != CellState::marked && cells_[x][y] != CellState::uncovered && flagAmount_ > 0)
 	{
-		cells_[x][y] = CellState::marked;
-		userInput_->OnMarkCell(x, y);
 		flagAmount_--;
+		cells_[x][y] = CellState::marked;
+		userInput_->OnMarkCell(x, y, flagAmount_);
 	}
 	return true;
 }
@@ -121,6 +126,11 @@ int Minesweeper::CheckAroundCell(int x, int y)
 	return mineAroundAmount;
 }
 
+void Minesweeper::CheckCellsAroundCell(int x, int y)
+{
+	
+}
+
 MinePositions RandomEngine::RandomizeMinePlacement(Cells cells_, int mineAmount)
 {
 	std::srand(static_cast<unsigned int>(std::time(nullptr)));
@@ -167,12 +177,12 @@ void KeyboardUserInput::OnResultMine(int x, int y)
 	std::cout << "Na wspolrzednych: " << x << " i " << y << " jest mina. Przegrywasz";
 }
 
-void KeyboardUserInput::OnMarkCell(int x, int y)
+void KeyboardUserInput::OnMarkCell(int x, int y, int)
 {
 	
 }
 
-bool KeyboardUserInput::Init(const Cells&, const MinePositions&)
+bool KeyboardUserInput::Init(const Cells&, const MinePositions&, const int &)
 {
 	return true;
 }

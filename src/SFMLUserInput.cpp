@@ -12,22 +12,20 @@ void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 {
     GraphicCellsUpdate();
     graphicCells_[x][y].mineAmountText_.setString(std::to_string(mineAroundCell));
-    Draw();
 }
 
 void SFMLUserInput::OnResultMine(int x, int y)
 {
     graphicCells_[x][y].cellShape_.setFillColor(sf::Color::Red);
-    Draw();
 }
 
-void SFMLUserInput::OnMarkCell(int x, int y)
+void SFMLUserInput::OnMarkCell(int x, int y, int flagAmount)
 {
     GraphicCellsUpdate();
-    Draw();
+    UpdateFlagAmountLeftText(std::to_string(flagAmount));
 }
 
-bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
+bool SFMLUserInput::Init(const Cells& cells, const MinePositions&, const int& flagAmount)
 {
     if (!font_.loadFromFile("../fonts/comic.ttf"))
     {
@@ -36,18 +34,27 @@ bool SFMLUserInput::Init(const Cells& cells, const MinePositions&)
 
     cells_ = &cells;
     int windowSizeX = static_cast<int>(cells_->size()) * 40;
-    int windowSizeY = static_cast<int>(cells_->at(0).size())* 40;
+    int windowSizeY = (static_cast<int>(cells_->at(0).size()) * 40) + 40;
     window_.setSize(sf::Vector2u(windowSizeX, windowSizeY));
-    cellSize_ = static_cast<float>(window_.getSize().x) / static_cast<float>(cells_->size());
+    boardSizeX_ = window_.getSize().x;
+    boardSizeY_ = window_.getSize().y - 40;
+    cellSize_ = static_cast<float>(boardSizeX_) / static_cast<float>(cells_->size());
+    SetClockText();
+    SetFlagAmountLeftText(std::to_string(flagAmount));
     GraphicCellsMake();
-    Draw();
+    clock_.restart();
     
     return true;
 }
 
 void SFMLUserInput::Draw()
 {
+        UpdateClockText();
+
         window_.clear();
+
+        window_.draw(clockText_);
+        window_.draw(flagAmountLeftText_);
 
         for (int i = 0; i < graphicCells_.size(); i++)
         {
@@ -58,6 +65,28 @@ void SFMLUserInput::Draw()
             }
         }
         window_.display();
+}
+
+void SFMLUserInput::SetClockText()
+{
+    clockText_ = makeText(cellSize_ - (0.25 * cellSize_), "skibidi", 0.0f, 5.0f, sf::Color::White);
+}
+
+void SFMLUserInput::UpdateClockText()
+{
+    int currentElapsedTime = clock_.getElapsedTime().asSeconds();
+    std::string elapsedTimeString = std::to_string(currentElapsedTime);
+    clockText_.setString(elapsedTimeString);
+}
+
+void SFMLUserInput::SetFlagAmountLeftText(std::string textString)
+{
+    flagAmountLeftText_ = makeText(cellSize_ - (0.25 * cellSize_), textString, 350.0f, 5.0f, sf::Color::White);
+}
+
+void SFMLUserInput::UpdateFlagAmountLeftText(std::string textString)
+{
+    flagAmountLeftText_.setString(textString);
 }
 
 void SFMLUserInput::GraphicCellsMake()
@@ -78,8 +107,8 @@ void SFMLUserInput::GraphicCellsMake()
             }
             else
             {
-                graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, j * cellSize_, sf::Color::Black);
-                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::White);
+                graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", i * cellSize_, (j * cellSize_) + (window_.getSize().y - boardSizeY_), sf::Color::Black);
+                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, (j * cellSize_) + (window_.getSize().y - boardSizeY_), sf::Color::White);
             }
         }
     }
@@ -113,7 +142,7 @@ sf::RectangleShape SFMLUserInput::makeRectangle(float sizeX, float sizeY, float 
     sf::RectangleShape rect;
     rect.setSize(sf::Vector2f(sizeX, sizeY));
     rect.setFillColor(color);
-    rect.setOutlineThickness(2.0f);
+    rect.setOutlineThickness(-2.0f);
     rect.setOutlineColor(sf::Color::Black);
     rect.setPosition(sf::Vector2f(posX, posY));
     return rect;
@@ -145,13 +174,14 @@ Action SFMLUserInput::PollEvent()
         }
         else if (event.type == sf::Event::MouseButtonPressed)
         {
-            Position mousePosition = CalculateMousePosition();
-            action.playerPos_ = mousePosition;
-            
-            if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
-                action.actionType_ = ActionType::CheckCell;
-            else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
-                action.actionType_ = ActionType::MarkCell;
+            if (auto mousePosition = CalculateMousePosition())
+            {
+                action.playerPos_ = *mousePosition;
+                if (sf::Mouse::isButtonPressed(sf::Mouse::Left))
+                    action.actionType_ = ActionType::CheckCell;
+                else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
+                    action.actionType_ = ActionType::MarkCell;
+            }
         }
         else if (event.type == sf::Event::MouseButtonReleased)
         {
@@ -161,12 +191,20 @@ Action SFMLUserInput::PollEvent()
     return action;
 }
 
-Position SFMLUserInput::CalculateMousePosition()
+std::optional<Position> SFMLUserInput::CalculateMousePosition()
 {
     sf::Vector2i mousePosition = sf::Mouse::getPosition(window_);
-    int x = static_cast<int>(mousePosition.x) / static_cast<int>(cellSize_);
-    int y = static_cast<int>(mousePosition.y) / static_cast<int>(cellSize_);
-    return { x, y };
+    for (int i = 0; i < graphicCells_.size(); i++)
+    {
+        for (int j = 0; j < graphicCells_[i].size(); j++)
+        {
+            if (graphicCells_[i][j].cellShape_.getGlobalBounds().contains(sf::Vector2f(mousePosition)))
+            {
+                return Position { i, j };
+            }
+        }
+    }
+    return std::nullopt;
 }
 
 void SFMLUserInput::Delay(int delayTime) const

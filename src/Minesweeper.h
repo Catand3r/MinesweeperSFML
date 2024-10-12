@@ -21,10 +21,11 @@ public:
 
     Action PollEvent() override;
 
-    bool Init(const Cells &, const MinePositions &) override;
+    bool Init(const Cells &, const MinePositions &, const int &) override;
+
     void OnResultEmpty(int, int, int) override;
     void OnResultMine(int, int) override;
-    void OnMarkCell(int, int) override;
+    void OnMarkCell(int, int, int) override;
 };
 
 class IRandomEngine
@@ -53,13 +54,19 @@ private:
     IRandomEngine *randomEngine_;
 
     Cells cells_;
-    void Draw();
+    
     void CreateEmptyBoard();
     void PlaceMines();
+    
     [[nodiscard]] bool ExecuteCheckCell(int, int);
     [[nodiscard]] bool ExecuteMarkCell(int, int);
+    
     int flagAmount_;
     int mineAmount;
+    int checkAmount_ = 0;
+
     int CheckAroundCell(int, int);
+    void CheckCellsAroundCell(int, int);
+    
     MinePositions minePostitions_;
 };
