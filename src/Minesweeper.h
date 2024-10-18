@@ -35,8 +35,9 @@ private:
     int mineAmount;
     bool firstCheck_ = true;
 
+    bool IsPositionInRange(int, int);
     int CheckAroundCell(int, int);
-    void CheckCellsAroundCell(int, int);
+    void UncoverCellsAroundCell(int, int);
     void CreateEmptyMinePositions();
     
     MinePositions minePostitions_;

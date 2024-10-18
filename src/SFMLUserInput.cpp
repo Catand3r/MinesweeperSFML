@@ -3,14 +3,15 @@
 #include "SFML/Graphics.hpp"
 
 
-SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 320), "Minesweeper")
+SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 360), "Minesweeper")
 {
     
 }
 
 void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 {
-    graphicCells_[x][y].mineAmountText_.setString(std::to_string(mineAroundCell));
+    if(mineAroundCell > 0)
+        graphicCells_[x][y].mineAmountText_.setString(std::to_string(mineAroundCell));
 }
 
 void SFMLUserInput::OnResultMine(int x, int y)
@@ -41,29 +42,29 @@ bool SFMLUserInput::Init(const Cells& cells, const MinePositions&, const int& fl
     SetFlagAmountLeftText(std::to_string(flagAmount));
     GraphicCellsMake();
     clock_.restart();
-    
+
     return true;
 }
 
 void SFMLUserInput::Draw()
 {
-        UpdateClockText();
-        GraphicCellsUpdate();
+    UpdateClockText();
+    GraphicCellsUpdate();
 
-        window_.clear();
+    window_.clear();
 
-        window_.draw(clockText_);
-        window_.draw(flagAmountLeftText_);
+    window_.draw(clockText_);
+    window_.draw(flagAmountLeftText_);
 
-        for (int i = 0; i < graphicCells_.size(); i++)
+    for (int i = 0; i < graphicCells_.size(); i++)
+    {
+        for (int j = 0; j < graphicCells_[i].size(); j++)
         {
-            for (int j = 0; j < graphicCells_[i].size(); j++)
-            {
-                window_.draw(graphicCells_[i][j].cellShape_);
-                window_.draw(graphicCells_[i][j].mineAmountText_);
-            }
+            window_.draw(graphicCells_[i][j].cellShape_);
+            window_.draw(graphicCells_[i][j].mineAmountText_);
         }
-        window_.display();
+    }
+    window_.display();
 }
 
 Action SFMLUserInput::PollEvent()
@@ -127,21 +128,10 @@ void SFMLUserInput::GraphicCellsMake()
     {
         for (int j = 0; j < graphicCells_[i].size(); j++)
         {
-            if (cells_->at(i).at(j).uncovered)
-            {
-                graphicCells_[i][j].mineAmountText_ = makeText(static_cast<int>(cellSize_) , "", i * cellSize_, j * cellSize_, sf::Color::Black);
-                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Green);
-            }
-            else if (cells_->at(i).at(j).marked)
-            {
-                graphicCells_[i][j].mineAmountText_ = makeText(static_cast<int>(cellSize_), "", i * cellSize_, j * cellSize_, sf::Color::Black);
-                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, j * cellSize_, sf::Color::Yellow);
-            }
-            else if (!cells_->at(i).at(j).uncovered && !cells_->at(i).at(j).marked)
-            {
-                graphicCells_[i][j].mineAmountText_ = makeText(static_cast<int>(cellSize_), "", i * cellSize_, (j * cellSize_) + (window_.getSize().y - boardSizeY_), sf::Color::Black);
-                graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, i * cellSize_, (j * cellSize_) + (window_.getSize().y - boardSizeY_), sf::Color::White);
-            }
+            float posX = i * cellSize_;
+            float posY = j * cellSize_ + cellSize_;
+            graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, posX, posY);
+            graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", posX, posY, sf::Color::Black);
         }
     }
 }
@@ -152,15 +142,19 @@ void SFMLUserInput::GraphicCellsUpdate()
     {
         for (int j = 0; j < graphicCells_[i].size(); j++)
         {
-            if (cells_->at(i).at(j).uncovered)
+            if (cells_->at(i).at(j).uncovered && cells_->at(i).at(j).state == CellState::empty)
             {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Green);
+            }
+            else if (cells_->at(i).at(j).uncovered && cells_->at(i).at(j).state == CellState::mine)
+            {
+                graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Red);
             }
             else if (cells_->at(i).at(j).marked)
             {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Yellow);
             }
-            else
+            else if (!cells_->at(i).at(j).uncovered && !cells_->at(i).at(j).marked)
             {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::White);
             }

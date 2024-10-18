@@ -4,6 +4,27 @@
 #include <array>
 #include <utility>
 
+namespace
+{
+	std::array<Position, 8> GetAroundCellPosition(int x, int y)
+	{
+		std::array<Position, 8> positions =
+		{
+			Position{x, y + 1},
+			Position{x, y - 1},
+			Position{x + 1, y},
+			Position{x - 1, y},
+			Position{x + 1, y + 1},
+			Position{x + 1, y - 1},
+			Position{x - 1, y + 1},
+			Position{x - 1, y - 1},
+		};
+		return positions;
+	}
+
+	
+}
+
 Minesweeper::Minesweeper(IUserInput* userInput, IRandomEngine* randomEngine) : userInput_(userInput),
 randomEngine_(randomEngine),
 flagAmount_(10),
@@ -83,8 +104,15 @@ bool Minesweeper::ExecuteCheckCell(int x, int y)
 	}
 	else if (cells_[x][y].state != CellState::mine)
 	{
+		if (cells_[x][y].marked)
+			return ExecuteMarkCell(x, y);
 		cells_[x][y].SetUncovered();
-		userInput_->OnResultEmpty(x, y, CheckAroundCell(x, y));
+		int checkAroundCellAmount = CheckAroundCell(x, y);
+		userInput_->OnResultEmpty(x, y, checkAroundCellAmount);
+		if (checkAroundCellAmount == 0)
+		{
+			UncoverCellsAroundCell(x, y);
+		}
 		return true;
 	}
 	return true;
@@ -118,21 +146,11 @@ void Minesweeper::PlaceMines()
 int Minesweeper::CheckAroundCell(int x, int y)
 {
 	int mineAroundAmount = 0;
-	std::array<Position, 8> positions =
-	{
-		Position{x, y + 1},
-		Position{x, y - 1},
-		Position{x + 1, y},
-		Position{x - 1, y},
-		Position{x + 1, y + 1},
-		Position{x + 1, y - 1},
-		Position{x - 1, y + 1},
-		Position{x - 1, y - 1},
-	};
+	std::array<Position, 8> positions = GetAroundCellPosition(x, y);
 
 	for (const auto& [newX, newY] : positions)
 	{
-		if (newX >= 0 && newX < cells_.size() && newY >= 0 && newY < cells_[0].size() && cells_[newX][newY].state == CellState::mine)
+		if (IsPositionInRange(newX, newY) && cells_[newX][newY].state == CellState::mine)
 		{
 			mineAroundAmount++;
 		}
@@ -140,7 +158,23 @@ int Minesweeper::CheckAroundCell(int x, int y)
 	return mineAroundAmount;
 }
 
-void Minesweeper::CheckCellsAroundCell(int x, int y)
+void Minesweeper::UncoverCellsAroundCell(int x, int y)
 {
-	
+	std::array<Position, 8> positions = GetAroundCellPosition(x, y);
+	for (const auto& [newX, newY] : positions)
+	{
+		if (IsPositionInRange(newX, newY) && cells_[newX][newY].state != CellState::mine && !cells_[newX][newY].uncovered && !cells_[newX][newY].marked)
+		{
+			cells_[newX][newY].SetUncovered();
+			int cellAroundAmount = CheckAroundCell(newX, newY);
+			userInput_->OnResultEmpty(newX, newY, cellAroundAmount);
+			if (cellAroundAmount == 0)
+				UncoverCellsAroundCell(newX, newY);
+		}
+	}
+}
+
+bool Minesweeper::IsPositionInRange(int x, int y)
+{
+	return x >= 0 && x < cells_.size() && y >= 0 && y < cells_[0].size();
 }
