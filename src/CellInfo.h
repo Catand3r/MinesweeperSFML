@@ -12,10 +12,10 @@ enum class CellState
 
 struct CellInfo
 {
-	CellState state;
+	CellState state = CellState::empty;
 
-	bool uncovered;
-	bool marked;
+	bool uncovered = false;
+	bool marked = false;
 
 	void SetUncovered()
 	{

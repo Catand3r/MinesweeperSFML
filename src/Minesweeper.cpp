@@ -109,9 +109,9 @@ bool Minesweeper::ExecuteMarkCell(int x, int y)
 
 void Minesweeper::PlaceMines()
 {
-	for (int i = 0; i < minePostitions_.size(); i++)
+	for (const auto& [x,y] : minePostitions_)
 	{
-		cells_[minePostitions_[i].first][minePostitions_[i].second].state = CellState::mine;
+		cells_[x][y].state = CellState::mine;
 	}
 }
 
