@@ -13,7 +13,7 @@ elseif(UNIX)
     link_directories(./lib/Linux)
 endif(APPLE)
 
-add_executable(Minesweeper src/main.cpp src/Minesweeper.cpp src/SFMLUserInput.cpp)
+add_executable(Minesweeper src/main.cpp src/Minesweeper.cpp src/SFMLUserInput.cpp src/KeyboardUserInput.cpp src/RandomEngine.cpp)
 
 if(APPLE)
     target_link_libraries(Minesweeper
