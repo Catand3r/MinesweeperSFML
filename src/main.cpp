@@ -2,6 +2,7 @@
 #include <array>
 #include "Minesweeper.h"
 #include "SFMLUserInput.h"
+#include "KeyboardUserInput.h"
 
 int main()
 {

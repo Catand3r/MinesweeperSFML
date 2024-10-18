@@ -1,4 +1,5 @@
 #pragma once
+#include "CellInfo.h"
 #include <utility>
 #include <array>
 #include <vector>
@@ -12,18 +13,6 @@ enum class ActionType
     MarkCell,
     Close
 };
-
-enum class CellState
-{
-    empty = 0,
-    mine,
-    uncovered,
-    marked
-};
-
-using Position = std::pair<int, int>;
-using Cells = std::array<std::array<CellState, 8>, 10>;
-using MinePositions = std::vector<Position>;
 
 struct Action
 {

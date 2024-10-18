@@ -141,12 +141,17 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\KeyboardUserInput.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\Minesweeper.cpp" />
+    <ClCompile Include="..\src\RandomEngine.cpp" />
     <ClCompile Include="..\src\SFMLUserInput.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\CellInfo.h" />
+    <ClInclude Include="..\src\KeyboardUserInput.h" />
     <ClInclude Include="..\src\Minesweeper.h" />
+    <ClInclude Include="..\src\RandomEngine.h" />
     <ClInclude Include="..\src\SFMLUserInput.h" />
     <ClInclude Include="..\src\UserInput.h" />
   </ItemGroup>

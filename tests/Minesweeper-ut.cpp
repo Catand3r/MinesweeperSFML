@@ -9,7 +9,7 @@ using ::testing::Return;
 class MockRandomEngine : public IRandomEngine
 {
 public:
-    MOCK_METHOD(MinePositions, RandomizeMinePlacement, (Cells, int), (override));
+    MOCK_METHOD(MinePositions, RandomizeMinePlacement, (Cells, int, int, int), (override));
 };
 
 class MockUserInput : public IUserInput
@@ -101,7 +101,7 @@ TEST_F(MinesweeperTests, ShouldCallOnResultEmptyWhenUserPositionIsDifferentThanM
 
     Action action = CreateCheckCellAction(userPosition);
 
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
@@ -118,7 +118,6 @@ TEST_F(MinesweeperTests, ShouldThrowExceptionWhenUserPositionIsIncorrect)
 
     Action action = CreateCheckCellAction(userPosition);
 
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
 
@@ -133,7 +132,6 @@ TEST_F(MinesweeperTests, ShouldCallDelayAndReturnTrueWhenUserPositionIsNotGiven)
 
     Action action = CreateNoneAction(dummyUserPosition);
 
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, Delay(testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
@@ -162,7 +160,7 @@ TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCal
     action.actionType_ = ActionType::CheckCell;
 
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
     if (result)
         EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_));
@@ -214,7 +212,7 @@ TEST_P(CheckAroundCellParametricTests, ShouldCallOnResultEmptyWithSpecificMineAr
     action.playerPos_ = userPosition;
     action.actionType_ = ActionType::CheckCell;
 
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, expectedMines)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));

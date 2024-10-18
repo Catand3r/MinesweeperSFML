@@ -1,5 +1,6 @@
 #pragma once
 #include "UserInput.h"
+#include "RandomEngine.h"
 #include <iostream>
 #include <utility>
 #include <array>
@@ -10,37 +11,6 @@ enum class Result
 {
     empty = 0,
     mine
-};
-
-using Cells = std::array<std::array<CellState, 8>, 10>;
-
-class KeyboardUserInput : public IUserInput
-{
-public:
-    ~KeyboardUserInput() override = default;
-
-    Action PollEvent() override;
-
-    bool Init(const Cells &, const MinePositions &, const int &) override;
-
-    void OnResultEmpty(int, int, int) override;
-    void OnResultMine(int, int) override;
-    void OnMarkCell(int, int, int) override;
-};
-
-class IRandomEngine
-{
-public:
-    virtual ~IRandomEngine() = default;
-
-    virtual MinePositions RandomizeMinePlacement(Cells, int) = 0;
-};
-
-class RandomEngine : public IRandomEngine
-{
-    ~RandomEngine() override = default;
-
-    MinePositions RandomizeMinePlacement(Cells, int) override;
 };
 
 class Minesweeper
@@ -63,10 +33,11 @@ private:
     
     int flagAmount_;
     int mineAmount;
-    int checkAmount_ = 0;
+    bool firstCheck_ = true;
 
     int CheckAroundCell(int, int);
     void CheckCellsAroundCell(int, int);
+    void CreateEmptyMinePositions();
     
     MinePositions minePostitions_;
 };
