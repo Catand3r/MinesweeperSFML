@@ -1,22 +1,23 @@
-#include "UserInput.h"
+#include "SFML/Audio.hpp"
 #include "SFML/Graphics.hpp"
+#include "UserInput.h"
+#include <cmath>
 #include <optional>
 #include <string>
 
 struct GraphicCell
 {
-public:
+  public:
     sf::RectangleShape cellShape_;
     sf::Text mineAmountText_;
 };
 
-using GraphicCells = std::array<std::array<GraphicCell, 8>, 10>;
+using GraphicCells = std::vector<std::vector<GraphicCell>>;
 
 class SFMLUserInput : public IUserInput
 {
-public:
-
-    SFMLUserInput();
+  public:
+    SFMLUserInput(int x, int y);
 
     ~SFMLUserInput() override = default;
 
@@ -24,7 +25,9 @@ public:
     virtual void OnResultMine(int, int) override;
     virtual void OnMarkCell(int, int, int) override;
 
-    virtual bool Init(const Cells&, const MinePositions&, const int&) override;
+    virtual void OnGameWon() override;
+
+    virtual bool Init(const Cells &, const MinePositions &, const int &) override;
 
     virtual Action PollEvent() override;
 
@@ -32,7 +35,10 @@ public:
 
     virtual void Delay(int) const override;
 
-private:
+  private:
+    sf::Music music_;
+
+    sf::Text gameWonText_;
 
     sf::Clock clock_;
     sf::Text clockText_;
@@ -46,23 +52,28 @@ private:
     GraphicCells graphicCells_;
     ActionType ActionType_;
 
-    const Cells* cells_ = nullptr;
+    const Cells *cells_ = nullptr;
 
-    const int* flagAmount_;
+    const int *flagAmount_;
 
     float cellSize_ = 20.0f;
     float boardSizeX_ = 400.0f;
     float boardSizeY_ = 400.0f;
+
+    bool isGameRunning_ = true;
 
     std::optional<Position> CalculateMousePosition();
 
     sf::RectangleShape makeRectangle(float, float, float, float, sf::Color = sf::Color::White);
     sf::Text makeText(int, std::string, float, float, sf::Color = sf::Color::White);
 
-    bool ShouldReadEvent(sf::Event&, Action, sf::Clock);
+    bool ShouldReadEvent(sf::Event &, Action, sf::Clock);
 
     void GraphicCellsUpdate();
     void GraphicCellsMake();
+
+    void SetWonText();
+    void UpdateWonText();
 
     void SetClockText();
     void UpdateClockText();

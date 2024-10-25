@@ -40,5 +40,5 @@ struct CellInfo
 };
 
 using Position = std::pair<int, int>;
-using Cells = std::array<std::array<CellInfo, 8>, 10>;
+using Cells = std::vector<std::vector<CellInfo>>;
 using MinePositions = std::vector<Position>;

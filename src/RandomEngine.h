@@ -3,15 +3,15 @@
 
 class IRandomEngine
 {
-public:
+  public:
     virtual ~IRandomEngine() = default;
 
-    virtual MinePositions RandomizeMinePlacement(const Cells&, int, int, int) = 0;
+    virtual MinePositions RandomizeMinePlacement(const Cells &, int, int, int) = 0;
 };
 
 class RandomEngine : public IRandomEngine
 {
     ~RandomEngine() override = default;
 
-    MinePositions RandomizeMinePlacement(const Cells&, int, int, int) override;
+    MinePositions RandomizeMinePlacement(const Cells &, int, int, int) override;
 };

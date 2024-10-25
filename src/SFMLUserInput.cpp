@@ -1,21 +1,21 @@
-#include <iostream>
 #include "SFMLUserInput.h"
+#include "SFML/Audio.hpp"
 #include "SFML/Graphics.hpp"
+#include <iostream>
 
-
-SFMLUserInput::SFMLUserInput() : window_(sf::VideoMode(400, 360), "Minesweeper")
+SFMLUserInput::SFMLUserInput(int x, int y) : window_(sf::VideoMode(40 * x, 40 * y + 40), "Minesweeper")
 {
-    
 }
 
 void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 {
-    if(mineAroundCell > 0)
+    if (mineAroundCell > 0)
         graphicCells_[x][y].mineAmountText_.setString(std::to_string(mineAroundCell));
 }
 
 void SFMLUserInput::OnResultMine(int x, int y)
 {
+    isGameRunning_ = false;
     graphicCells_[x][y].cellShape_.setFillColor(sf::Color::Red);
 }
 
@@ -24,12 +24,23 @@ void SFMLUserInput::OnMarkCell(int x, int y, int flagAmount)
     UpdateFlagAmountLeftText(std::to_string(flagAmount));
 }
 
-bool SFMLUserInput::Init(const Cells& cells, const MinePositions&, const int& flagAmount)
+void SFMLUserInput::OnGameWon()
+{
+    isGameRunning_ = false;
+    UpdateWonText();
+}
+
+bool SFMLUserInput::Init(const Cells &cells, const MinePositions &, const int &flagAmount)
 {
     if (!font_.loadFromFile("../fonts/comic.ttf"))
     {
         return false;
     }
+
+    if (!music_.openFromFile("../soundfx/fortniteballs.wav"))
+        return false; // error
+    music_.setVolume(100.0f);
+    music_.play();
 
     cells_ = &cells;
     int windowSizeX = static_cast<int>(cells_->size()) * 40;
@@ -38,6 +49,7 @@ bool SFMLUserInput::Init(const Cells& cells, const MinePositions&, const int& fl
     boardSizeX_ = static_cast<float>(window_.getSize().x);
     boardSizeY_ = static_cast<float>(window_.getSize().y - 40);
     cellSize_ = static_cast<float>(boardSizeX_) / static_cast<float>(cells_->size());
+    SetWonText();
     SetClockText();
     SetFlagAmountLeftText(std::to_string(flagAmount));
     GraphicCellsMake();
@@ -48,11 +60,15 @@ bool SFMLUserInput::Init(const Cells& cells, const MinePositions&, const int& fl
 
 void SFMLUserInput::Draw()
 {
-    UpdateClockText();
-    GraphicCellsUpdate();
+    if (isGameRunning_)
+    {
+        UpdateClockText();
+        GraphicCellsUpdate();
+    }
 
     window_.clear();
 
+    window_.draw(gameWonText_);
     window_.draw(clockText_);
     window_.draw(flagAmountLeftText_);
 
@@ -74,7 +90,8 @@ Action SFMLUserInput::PollEvent()
 
     Action action = Action::CreateNoneAction();
 
-    while (ShouldReadEvent(event, action, eventTimer));
+    while (ShouldReadEvent(event, action, eventTimer))
+        ;
     {
         if (event.type == sf::Event::Closed)
         {
@@ -100,9 +117,26 @@ Action SFMLUserInput::PollEvent()
     return action;
 }
 
+void SFMLUserInput::SetWonText()
+{
+    gameWonText_ =
+        makeText(static_cast<int>(cellSize_ - static_cast<float>((0.15 * cellSize_))), "",
+                 static_cast<float>(.5f * boardSizeX_), static_cast<float>(.5f * cellSize_), sf::Color::Green);
+}
+
+void SFMLUserInput::UpdateWonText()
+{
+    gameWonText_.setString("You won");
+    auto center = gameWonText_.getGlobalBounds().getSize() / 2.f;
+    auto localBounds = center + gameWonText_.getLocalBounds().getPosition();
+    auto rounded = sf::Vector2f{std::round(localBounds.x), std::round(localBounds.y)};
+    gameWonText_.setOrigin(rounded);
+}
+
 void SFMLUserInput::SetClockText()
 {
-    clockText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), "skibidi", 0.0f, 5.0f, sf::Color::White);
+    clockText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), "skibidi",
+                          .125f * boardSizeX_, static_cast<float>(.5f * cellSize_), sf::Color::White);
 }
 
 void SFMLUserInput::UpdateClockText()
@@ -114,7 +148,8 @@ void SFMLUserInput::UpdateClockText()
 
 void SFMLUserInput::SetFlagAmountLeftText(std::string textString)
 {
-    flagAmountLeftText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), textString, 350.0f, 5.0f, sf::Color::White);
+    flagAmountLeftText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), textString,
+                                   .875f * boardSizeX_, static_cast<float>(.5f * cellSize_), sf::Color::White);
 }
 
 void SFMLUserInput::UpdateFlagAmountLeftText(std::string textString)
@@ -124,14 +159,17 @@ void SFMLUserInput::UpdateFlagAmountLeftText(std::string textString)
 
 void SFMLUserInput::GraphicCellsMake()
 {
+    graphicCells_.resize(cells_->size());
     for (int i = 0; i < graphicCells_.size(); i++)
     {
+        graphicCells_[i].resize(cells_->at(i).size());
         for (int j = 0; j < graphicCells_[i].size(); j++)
         {
             float posX = i * cellSize_;
             float posY = j * cellSize_ + cellSize_;
             graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, posX, posY);
-            graphicCells_[i][j].mineAmountText_ = makeText(cellSize_, "", posX, posY, sf::Color::Black);
+            graphicCells_[i][j].mineAmountText_ =
+                makeText(cellSize_, "", posX + .25f * cellSize_, posY - .125f * cellSize_, sf::Color::Black);
         }
     }
 }
@@ -171,7 +209,7 @@ std::optional<Position> SFMLUserInput::CalculateMousePosition()
         {
             if (graphicCells_[i][j].cellShape_.getGlobalBounds().contains(sf::Vector2f(mousePosition)))
             {
-                return Position { i, j };
+                return Position{i, j};
             }
         }
     }
@@ -183,9 +221,10 @@ void SFMLUserInput::Delay(int delayTime) const
     sf::sleep(sf::milliseconds(delayTime));
 }
 
-bool SFMLUserInput::ShouldReadEvent(sf::Event& event, Action action, sf::Clock eventTimer)
+bool SFMLUserInput::ShouldReadEvent(sf::Event &event, Action action, sf::Clock eventTimer)
 {
-    return window_.pollEvent(event) && action.actionType_ == ActionType::None && eventTimer.getElapsedTime() < sf::milliseconds(100);
+    return window_.pollEvent(event) && action.actionType_ == ActionType::None &&
+           eventTimer.getElapsedTime() < sf::milliseconds(100);
 }
 
 sf::RectangleShape SFMLUserInput::makeRectangle(float sizeX, float sizeY, float posX, float posY, sf::Color color)
@@ -201,10 +240,13 @@ sf::RectangleShape SFMLUserInput::makeRectangle(float sizeX, float sizeY, float 
 
 sf::Text SFMLUserInput::makeText(int size, std::string textString, float x, float y, sf::Color color)
 {
-    sf::Text text("", font_);
+    sf::Text text(textString, font_);
     text.setCharacterSize(size);
-    text.setString(textString);
     text.setFillColor(color);
     text.setPosition(sf::Vector2f(x, y));
+    auto center = text.getGlobalBounds().getSize() / 2.f;
+    auto localBounds = center + text.getLocalBounds().getPosition();
+    auto rounded = sf::Vector2f{std::round(localBounds.x), std::round(localBounds.y)};
+    text.setOrigin(rounded);
     return text;
 }

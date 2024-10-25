@@ -8,25 +8,25 @@ using ::testing::Return;
 
 class MockRandomEngine : public IRandomEngine
 {
-public:
-    MOCK_METHOD(MinePositions, RandomizeMinePlacement, (const Cells&, int, int, int), (override));
+  public:
+    MOCK_METHOD(MinePositions, RandomizeMinePlacement, (const Cells &, int, int, int), (override));
 };
 
 class MockUserInput : public IUserInput
 {
-public:
+  public:
     MOCK_METHOD(bool, Init, (const Cells &, const MinePositions &, const int &), (override));
     MOCK_METHOD(void, OnResultEmpty, (int, int, int), (override));
     MOCK_METHOD(void, OnResultMine, (int, int), (override));
     MOCK_METHOD(void, OnMarkCell, (int, int, int), (override));
+    MOCK_METHOD(void, OnGameWon, (), (override));
     MOCK_METHOD(Action, PollEvent, (), (override));
     MOCK_METHOD(void, Delay, (int), (const override));
-
 };
 
 class MinesweeperTests : public ::testing::Test
 {
-protected:
+  protected:
     void SetUp() override
     {
         userInputMock_ = new MockUserInput();
@@ -57,7 +57,7 @@ protected:
 
     Minesweeper CreateSut()
     {
-        return Minesweeper(userInputMock_, randomEngineMock_);
+        return Minesweeper(userInputMock_, randomEngineMock_, 10, 8);
     }
 
     MockUserInput *userInputMock_;
@@ -79,7 +79,7 @@ TEST_F(MinesweeperTests, ShouldCallOnResultMineWhenUserPositionIsEqualToMinePosi
 {
     MinePositions minePositions{{0, 1}};
     Position userPosition1{0, 0};
-    Position userPosition2{ 0, 1 };
+    Position userPosition2{0, 1};
 
     Action action1 = CreateCheckCellAction(userPosition1);
     Action action2 = CreateCheckCellAction(userPosition2);
@@ -87,16 +87,16 @@ TEST_F(MinesweeperTests, ShouldCallOnResultMineWhenUserPositionIsEqualToMinePosi
     ::testing::InSequence seq;
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillOnce(Return(action1));
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_))
+        .WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition1.first, userPosition1.second, testing::_)).Times(1);
     EXPECT_CALL(*userInputMock_, PollEvent()).WillOnce(Return(action2));
     EXPECT_CALL(*userInputMock_, OnResultMine(userPosition2.first, userPosition2.second)).Times(1);
-    EXPECT_CALL(*userInputMock_, Delay(testing::_));
 
     Minesweeper ms = CreateSut();
 
     ASSERT_TRUE(ms.Run());
-    ASSERT_FALSE(ms.Run());
+    ASSERT_TRUE(ms.Run());
 }
 
 TEST_F(MinesweeperTests, ShouldCallOnResultEmptyWhenUserPositionIsDifferentThanMinePosition)
@@ -106,7 +106,8 @@ TEST_F(MinesweeperTests, ShouldCallOnResultEmptyWhenUserPositionIsDifferentThanM
 
     Action action = CreateCheckCellAction(userPosition);
 
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_))
+        .WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
@@ -133,7 +134,7 @@ TEST_F(MinesweeperTests, ShouldThrowExceptionWhenUserPositionIsIncorrect)
 
 TEST_F(MinesweeperTests, ShouldCallDelayAndReturnTrueWhenUserPositionIsNotGiven)
 {
-    Position dummyUserPosition{ 0, 0 };
+    Position dummyUserPosition{0, 0};
 
     Action action = CreateNoneAction(dummyUserPosition);
 
@@ -165,7 +166,8 @@ TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCal
     action.actionType_ = ActionType::CheckCell;
 
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_))
+        .WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
     if (result)
         EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, testing::_));
@@ -174,7 +176,7 @@ TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCal
         EXPECT_CALL(*userInputMock_, OnResultMine(userPosition.first, userPosition.second));
         EXPECT_CALL(*userInputMock_, Delay(testing::_));
     }
-    Minesweeper ms(userInputMock_, randomEngineMock_);
+    Minesweeper ms(userInputMock_, randomEngineMock_, 10, 8);
 
     EXPECT_EQ(ms.Run(), result);
 
@@ -184,9 +186,8 @@ TEST_P(MinesweeperParametricTests, GivenMinePositionsAndUserPositionWhenRunIsCal
 
 INSTANTIATE_TEST_SUITE_P(GivenMinePositionsAndUserPositionWhenRunIsCalledThenPropertyResultShouldBeReturn,
                          MinesweeperParametricTests,
-                         ::testing::Values(
-                             MinesweeperTestParameters{{{0, 1}}, {1, 0}, true}));
-                             //MinesweeperTestParameters{{{0, 1}}, {0, 1}, false}));
+                         ::testing::Values(MinesweeperTestParameters{{{0, 1}}, {1, 0}, true}));
+// MinesweeperTestParameters{{{0, 1}}, {0, 1}, false}));
 
 struct CheckAroundCellTestParameters
 {
@@ -207,8 +208,8 @@ TEST_P(CheckAroundCellParametricTests, ShouldCallOnResultEmptyWithSpecificMineAr
     Position userPosition = params.userPosition;
     const int expectedMines = params.result;
 
-    MockUserInput* userInputMock_;
-    MockRandomEngine* randomEngineMock_;
+    MockUserInput *userInputMock_;
+    MockRandomEngine *randomEngineMock_;
 
     userInputMock_ = new MockUserInput();
     randomEngineMock_ = new MockRandomEngine();
@@ -217,12 +218,13 @@ TEST_P(CheckAroundCellParametricTests, ShouldCallOnResultEmptyWithSpecificMineAr
     action.playerPos_ = userPosition;
     action.actionType_ = ActionType::CheckCell;
 
-    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_)).WillOnce(Return(minePositions));
+    EXPECT_CALL(*randomEngineMock_, RandomizeMinePlacement(testing::_, testing::_, testing::_, testing::_))
+        .WillOnce(Return(minePositions));
     EXPECT_CALL(*userInputMock_, OnResultEmpty(userPosition.first, userPosition.second, expectedMines)).Times(1);
     EXPECT_CALL(*userInputMock_, Init(testing::_, testing::_, testing::_));
     EXPECT_CALL(*userInputMock_, PollEvent()).WillRepeatedly(Return(action));
 
-    Minesweeper ms(userInputMock_, randomEngineMock_);
+    Minesweeper ms(userInputMock_, randomEngineMock_, 10, 8);
     const bool runResult = ms.Run();
 
     delete userInputMock_;
@@ -232,40 +234,41 @@ TEST_P(CheckAroundCellParametricTests, ShouldCallOnResultEmptyWithSpecificMineAr
 }
 
 INSTANTIATE_TEST_SUITE_P(ShouldCallOnResultEmptyWithSpecificMineAroundAmountWhenMineNotHit,
-    CheckAroundCellParametricTests,
-    ::testing::Values(
-        // Lewy górny róg (x=0, y=0)
-        CheckAroundCellTestParameters{ {{1, 0}, {1, 1}, {0, 1}}, {0, 0}, 3 },
-        CheckAroundCellTestParameters{ {{1, 1}, {0, 1}}, {0, 0}, 2 },
+                         CheckAroundCellParametricTests,
+                         ::testing::Values(
+                             // Lewy górny róg (x=0, y=0)
+                             CheckAroundCellTestParameters{{{1, 0}, {1, 1}, {0, 1}}, {0, 0}, 3},
+                             CheckAroundCellTestParameters{{{1, 1}, {0, 1}}, {0, 0}, 2},
 
-        // Prawy górny róg (x=9, y=0)
-        CheckAroundCellTestParameters{ {{8, 0}, {8, 1}, {9, 1}}, {9, 0}, 3 },
-        CheckAroundCellTestParameters{ {{8, 0}, {9, 1}}, {9, 0}, 2 },
+                             // Prawy górny róg (x=9, y=0)
+                             CheckAroundCellTestParameters{{{8, 0}, {8, 1}, {9, 1}}, {9, 0}, 3},
+                             CheckAroundCellTestParameters{{{8, 0}, {9, 1}}, {9, 0}, 2},
 
-        // Lewy dolny róg (x=0, y=7)
-        CheckAroundCellTestParameters{ {{0, 6}, {1, 6}, {1, 7}}, {0, 7}, 3 },
-        CheckAroundCellTestParameters{ {{1, 7}, {1, 6}}, {0, 7}, 2 },
+                             // Lewy dolny róg (x=0, y=7)
+                             CheckAroundCellTestParameters{{{0, 6}, {1, 6}, {1, 7}}, {0, 7}, 3},
+                             CheckAroundCellTestParameters{{{1, 7}, {1, 6}}, {0, 7}, 2},
 
-        // Prawy dolny róg (x=9, y=7)
-        CheckAroundCellTestParameters{ {{8, 7}, {8, 6}, {9, 6}}, {9, 7}, 3 },
-        CheckAroundCellTestParameters{ {{8, 7}, {9, 6}}, {9, 7}, 2 },
+                             // Prawy dolny róg (x=9, y=7)
+                             CheckAroundCellTestParameters{{{8, 7}, {8, 6}, {9, 6}}, {9, 7}, 3},
+                             CheckAroundCellTestParameters{{{8, 7}, {9, 6}}, {9, 7}, 2},
 
-        // Górny brzeg (œrodkowy punkt, x=5, y=0)
-        CheckAroundCellTestParameters{ {{4, 0}, {4, 1}, {5, 1}, {6, 0}, {6, 1}}, {5, 0}, 5 },
-        CheckAroundCellTestParameters{ {{4, 1}, {5, 1}}, {5, 0}, 2 },
+                             // Górny brzeg (œrodkowy punkt, x=5, y=0)
+                             CheckAroundCellTestParameters{{{4, 0}, {4, 1}, {5, 1}, {6, 0}, {6, 1}}, {5, 0}, 5},
+                             CheckAroundCellTestParameters{{{4, 1}, {5, 1}}, {5, 0}, 2},
 
-        // Dolny brzeg (œrodkowy punkt, x=5, y=7)
-        CheckAroundCellTestParameters{ {{4, 7}, {4, 6}, {5, 6}, {6, 6}, {6, 7}}, {5, 7}, 5 },
-        CheckAroundCellTestParameters{ {{4, 7}, {5, 6}}, {5, 7}, 2 },
+                             // Dolny brzeg (œrodkowy punkt, x=5, y=7)
+                             CheckAroundCellTestParameters{{{4, 7}, {4, 6}, {5, 6}, {6, 6}, {6, 7}}, {5, 7}, 5},
+                             CheckAroundCellTestParameters{{{4, 7}, {5, 6}}, {5, 7}, 2},
 
-        // Lewy brzeg (œrodkowy punkt, x=0, y=4)
-        CheckAroundCellTestParameters{ {{0, 3}, {1, 3}, {1, 4}, {0, 5}, {1, 5}}, {0, 4}, 5 },
-        CheckAroundCellTestParameters{ {{1, 3}, {1, 4}}, {0, 4}, 2 },
+                             // Lewy brzeg (œrodkowy punkt, x=0, y=4)
+                             CheckAroundCellTestParameters{{{0, 3}, {1, 3}, {1, 4}, {0, 5}, {1, 5}}, {0, 4}, 5},
+                             CheckAroundCellTestParameters{{{1, 3}, {1, 4}}, {0, 4}, 2},
 
-        // Prawy brzeg (œrodkowy punkt, x=9, y=4)
-        CheckAroundCellTestParameters{ {{8, 3}, {8, 4}, {9, 3}, {8, 5}, {9, 5}}, {9, 4}, 5 },
-        CheckAroundCellTestParameters{ {{8, 4}, {9, 5}}, {9, 4}, 2 },
+                             // Prawy brzeg (œrodkowy punkt, x=9, y=4)
+                             CheckAroundCellTestParameters{{{8, 3}, {8, 4}, {9, 3}, {8, 5}, {9, 5}}, {9, 4}, 5},
+                             CheckAroundCellTestParameters{{{8, 4}, {9, 5}}, {9, 4}, 2},
 
-        // Wnêtrze planszy (punkt œrodkowy, x=5, y=4)
-        CheckAroundCellTestParameters{ {{4, 3}, {4, 4}, {4, 5}, {5, 3}, {5, 5}, {6, 3}, {6, 4}, {6, 5}}, {5, 4}, 8 },
-        CheckAroundCellTestParameters{ {{4, 4}, {5, 3}, {6, 4}}, {5, 4}, 3 }));
+                             // Wnêtrze planszy (punkt œrodkowy, x=5, y=4)
+                             CheckAroundCellTestParameters{
+                                 {{4, 3}, {4, 4}, {4, 5}, {5, 3}, {5, 5}, {6, 3}, {6, 4}, {6, 5}}, {5, 4}, 8},
+                             CheckAroundCellTestParameters{{{4, 4}, {5, 3}, {6, 4}}, {5, 4}, 3}));

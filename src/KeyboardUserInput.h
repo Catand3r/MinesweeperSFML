@@ -13,4 +13,6 @@ public:
     void OnResultEmpty(int, int, int) override;
     void OnResultMine(int, int) override;
     void OnMarkCell(int, int, int) override;
+
+    void OnGameWon() override;
 };

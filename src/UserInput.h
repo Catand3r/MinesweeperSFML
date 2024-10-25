@@ -42,6 +42,8 @@ public:
     virtual void OnResultMine(int, int) = 0;
     virtual void OnMarkCell(int, int, int) = 0;
 
+    virtual void OnGameWon() = 0;
+
     virtual Action PollEvent() = 0;
 
     virtual void Draw() { };
