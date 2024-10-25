@@ -67,6 +67,7 @@ if(APPLE)
         libsfml-window.2.6.1.dylib
         libsfml-graphics.2.6.1.dylib
         libsfml-network.2.6.1.dylib
+	libsfml-audio.2.6.1.dylib
     )
 elseif(UNIX)
     target_link_libraries(${PROJECT_NAME}-ut PUBLIC gtest_main gmock_main
@@ -74,6 +75,7 @@ elseif(UNIX)
         libsfml-window.so.2.6.1
         libsfml-graphics.so.2.6.1
         libsfml-network.so.2.6.1
+	libsfml-audio.so.2.6.1
     )
 endif(APPLE)
 
