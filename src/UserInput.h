@@ -1,22 +1,21 @@
 #pragma once
 #include "CellInfo.h"
-#include <utility>
 #include <array>
+#include <utility>
 #include <vector>
-
-
 
 enum class ActionType
 {
     None = 0,
     CheckCell,
     MarkCell,
-    Close
+    Close,
+    Restart
 };
 
 struct Action
 {
-public:
+  public:
     static Action CreateNoneAction()
     {
         Action noneAction;
@@ -29,11 +28,9 @@ public:
     Position playerPos_;
 };
 
-
 class IUserInput
 {
-public:
-
+  public:
     virtual ~IUserInput() = default;
 
     virtual bool Init(const Cells &, const MinePositions &, const int &) = 0;
@@ -46,8 +43,9 @@ public:
 
     virtual Action PollEvent() = 0;
 
-    virtual void Draw() { };
+    virtual void DrawGameRunning() {};
 
-    virtual void Delay(int) const { };
+    virtual void DrawGameNotRunning() {};
 
+    virtual void Delay(int) const {};
 };

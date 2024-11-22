@@ -31,7 +31,9 @@ class SFMLUserInput : public IUserInput
 
     virtual Action PollEvent() override;
 
-    virtual void Draw() override;
+    virtual void DrawGameRunning() override;
+
+    virtual void DrawGameNotRunning() override;
 
     virtual void Delay(int) const override;
 
@@ -54,13 +56,13 @@ class SFMLUserInput : public IUserInput
 
     const Cells *cells_ = nullptr;
 
+    const MinePositions *minePositions_ = nullptr;
+
     const int *flagAmount_;
 
     float cellSize_ = 20.0f;
     float boardSizeX_ = 400.0f;
     float boardSizeY_ = 400.0f;
-
-    bool isGameRunning_ = true;
 
     std::optional<Position> CalculateMousePosition();
 

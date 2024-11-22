@@ -15,8 +15,6 @@ void SFMLUserInput::OnResultEmpty(int x, int y, int mineAroundCell)
 
 void SFMLUserInput::OnResultMine(int x, int y)
 {
-    isGameRunning_ = false;
-    graphicCells_[x][y].cellShape_.setFillColor(sf::Color::Red);
 }
 
 void SFMLUserInput::OnMarkCell(int x, int y, int flagAmount)
@@ -26,11 +24,10 @@ void SFMLUserInput::OnMarkCell(int x, int y, int flagAmount)
 
 void SFMLUserInput::OnGameWon()
 {
-    isGameRunning_ = false;
     UpdateWonText();
 }
 
-bool SFMLUserInput::Init(const Cells &cells, const MinePositions &, const int &flagAmount)
+bool SFMLUserInput::Init(const Cells &cells, const MinePositions &minePositions, const int &flagAmount)
 {
     if (!font_.loadFromFile("../fonts/comic.ttf"))
     {
@@ -43,6 +40,7 @@ bool SFMLUserInput::Init(const Cells &cells, const MinePositions &, const int &f
     music_.play();
 
     cells_ = &cells;
+    minePositions_ = &minePositions;
     int windowSizeX = static_cast<int>(cells_->size()) * 40;
     int windowSizeY = (static_cast<int>(cells_->at(0).size()) * 40) + 40;
     window_.setSize(sf::Vector2u(windowSizeX, windowSizeY));
@@ -58,13 +56,15 @@ bool SFMLUserInput::Init(const Cells &cells, const MinePositions &, const int &f
     return true;
 }
 
-void SFMLUserInput::Draw()
+void SFMLUserInput::DrawGameRunning()
 {
-    if (isGameRunning_)
-    {
-        UpdateClockText();
-        GraphicCellsUpdate();
-    }
+    UpdateClockText();
+    DrawGameNotRunning();
+}
+
+void SFMLUserInput::DrawGameNotRunning()
+{
+    GraphicCellsUpdate();
 
     window_.clear();
 
@@ -107,12 +107,22 @@ Action SFMLUserInput::PollEvent()
                     action.actionType_ = ActionType::CheckCell;
                 else if (sf::Mouse::isButtonPressed(sf::Mouse::Right))
                     action.actionType_ = ActionType::MarkCell;
+                else if (sf::Mouse::isButtonPressed(sf::Mouse::Middle))
+                    action.actionType_ = ActionType::Restart;
+            }
+        }
+        else if (event.type == sf::Event::KeyPressed)
+        {
+            if (event.key.code == sf::Keyboard::Enter)
+                action.actionType_ = ActionType::Restart;
+            else if (event.key.code == sf::Keyboard::Escape)
+            {
+                action.actionType_ = ActionType::Close;
+                window_.close();
             }
         }
         else if (event.type == sf::Event::MouseButtonReleased)
-        {
             action.actionType_ = ActionType::None;
-        }
     }
     return action;
 }
@@ -135,8 +145,8 @@ void SFMLUserInput::UpdateWonText()
 
 void SFMLUserInput::SetClockText()
 {
-    clockText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), "skibidi",
-                          .125f * boardSizeX_, static_cast<float>(.5f * cellSize_), sf::Color::White);
+    clockText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), "", .015f * boardSizeX_,
+                          static_cast<float>(.125f * cellSize_), sf::Color::White);
 }
 
 void SFMLUserInput::UpdateClockText()
@@ -149,7 +159,7 @@ void SFMLUserInput::UpdateClockText()
 void SFMLUserInput::SetFlagAmountLeftText(std::string textString)
 {
     flagAmountLeftText_ = makeText(static_cast<int>(cellSize_ - static_cast<float>((0.25 * cellSize_))), textString,
-                                   .875f * boardSizeX_, static_cast<float>(.5f * cellSize_), sf::Color::White);
+                                   .965f * boardSizeX_, static_cast<float>(.5f * cellSize_), sf::Color::White);
 }
 
 void SFMLUserInput::UpdateFlagAmountLeftText(std::string textString)
@@ -167,7 +177,7 @@ void SFMLUserInput::GraphicCellsMake()
         {
             float posX = i * cellSize_;
             float posY = j * cellSize_ + cellSize_;
-            graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, posX, posY);
+            graphicCells_[i][j].cellShape_ = makeRectangle(cellSize_, cellSize_, posX, posY, sf::Color::White);
             graphicCells_[i][j].mineAmountText_ =
                 makeText(cellSize_, "", posX + .25f * cellSize_, posY - .125f * cellSize_, sf::Color::Black);
         }
@@ -181,21 +191,13 @@ void SFMLUserInput::GraphicCellsUpdate()
         for (int j = 0; j < graphicCells_[i].size(); j++)
         {
             if (cells_->at(i).at(j).uncovered && cells_->at(i).at(j).state == CellState::empty)
-            {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Green);
-            }
             else if (cells_->at(i).at(j).uncovered && cells_->at(i).at(j).state == CellState::mine)
-            {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Red);
-            }
             else if (cells_->at(i).at(j).marked)
-            {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::Yellow);
-            }
             else if (!cells_->at(i).at(j).uncovered && !cells_->at(i).at(j).marked)
-            {
                 graphicCells_[i][j].cellShape_.setFillColor(sf::Color::White);
-            }
         }
     }
 }
@@ -208,9 +210,7 @@ std::optional<Position> SFMLUserInput::CalculateMousePosition()
         for (int j = 0; j < graphicCells_[i].size(); j++)
         {
             if (graphicCells_[i][j].cellShape_.getGlobalBounds().contains(sf::Vector2f(mousePosition)))
-            {
                 return Position{i, j};
-            }
         }
     }
     return std::nullopt;

@@ -134,7 +134,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>./../lib/Windows</AdditionalLibraryDirectories>
-      <AdditionalDependencies>sfml-graphics.lib;sfml-audio.lib;sfml-system.lib;sfml-window.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>sfml-graphics.lib;sfml-audio.lib;sfml-system.lib;sfml-window.lib;json-develop\include\nlohmann\ald_serializer.hpp;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>copy "$(SolutionDir)..\lib\Windows\Release\*.dll" "$(SolutionDir)x64\$(Configuration)"</Command>

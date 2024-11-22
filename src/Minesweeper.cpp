@@ -19,13 +19,11 @@ std::array<Position, 8> GetAroundCellPosition(int x, int y)
 } // namespace
 
 Minesweeper::Minesweeper(IUserInput *userInput, IRandomEngine *randomEngine, int x, int y)
-    : userInput_(userInput), randomEngine_(randomEngine), flagAmount_(mineAmount_),
+    : userInput_(userInput), randomEngine_(randomEngine), flagAmount_(mineAmount_), boardSizeX_(x), boardSizeY_(y),
       mineAmount_(x * y * mineAmountIndex_)
 {
-    CreateEmptyBoard(x, y);
+    CreateEmptyBoard(boardSizeX_, boardSizeY_);
     CreateEmptyMinePositions();
-
-    userInput->Init(cells_, minePostitions_, flagAmount_);
 }
 
 void Minesweeper::CreateEmptyBoard(int x, int y)
@@ -37,6 +35,7 @@ void Minesweeper::CreateEmptyBoard(int x, int y)
         for (int j = 0; j < cells_[i].size(); j++)
         {
             cells_[i][j].state = CellState::empty;
+            cells_[i][j].SetCovered();
         }
     }
 }
@@ -46,8 +45,38 @@ void Minesweeper::CreateEmptyMinePositions()
     minePostitions_.clear();
 }
 
+void Minesweeper::RunGameState()
+{
+    switch (gState_)
+    {
+    case GameState::gameRunningFirstCheck: {
+        CreateEmptyBoard(boardSizeX_, boardSizeY_);
+        CreateEmptyMinePositions();
+        flagAmount_ = mineAmount_;
+        firstCheck_ = true;
+        userInput_->Init(cells_, minePostitions_, flagAmount_);
+        userInput_->DrawGameNotRunning();
+        break;
+    }
+    case GameState::gameRunning: {
+        userInput_->DrawGameRunning();
+        break;
+    }
+    case GameState::gameLost: {
+        UncoverAllMines();
+        userInput_->DrawGameNotRunning();
+        break;
+    }
+    case GameState::gameWon: {
+        userInput_->DrawGameNotRunning();
+        break;
+    }
+    }
+}
+
 bool Minesweeper::Run()
 {
+
     bool result = true;
     Action action = userInput_->PollEvent();
     if (action.actionType_ == ActionType::Close)
@@ -57,6 +86,11 @@ bool Minesweeper::Run()
     else if (action.actionType_ == ActionType::None)
     {
         userInput_->Delay(100);
+        result = true;
+    }
+    else if (action.actionType_ == ActionType::Restart)
+    {
+        gState_ = GameState::gameRunningFirstCheck;
         result = true;
     }
     else if (action.actionType_ == ActionType::CheckCell || action.actionType_ == ActionType::MarkCell)
@@ -72,6 +106,7 @@ bool Minesweeper::Run()
             minePostitions_ = randomEngine_->RandomizeMinePlacement(cells_, mineAmount_, x, y);
             PlaceMines();
             result = ExecuteCheckCell(x, y);
+            gState_ = GameState::gameRunning;
         }
         else if (action.actionType_ == ActionType::CheckCell && !firstCheck_)
         {
@@ -86,9 +121,11 @@ bool Minesweeper::Run()
     if (!firstCheck_ && IsGameWon())
     {
         userInput_->OnGameWon();
+        gState_ = GameState::gameWon;
     }
 
-    userInput_->Draw();
+    RunGameState();
+
     return result;
 }
 
@@ -108,11 +145,21 @@ bool Minesweeper::IsGameWon()
     return true;
 }
 
+void Minesweeper::UncoverAllMines()
+{
+    for (const auto &[x, y] : minePostitions_)
+    {
+        cells_[x][y].SetUncovered();
+    }
+}
+
 bool Minesweeper::ExecuteCheckCell(int x, int y)
 {
     if (cells_[x][y].state == CellState::mine)
     {
         userInput_->OnResultMine(x, y);
+        cells_[x][y].SetUncovered();
+        gState_ = GameState::gameLost;
     }
     else if (cells_[x][y].state != CellState::mine)
     {
@@ -152,6 +199,7 @@ void Minesweeper::PlaceMines()
     for (const auto &[x, y] : minePostitions_)
     {
         cells_[x][y].state = CellState::mine;
+        cells_[x][y].SetCovered();
     }
 }
 
