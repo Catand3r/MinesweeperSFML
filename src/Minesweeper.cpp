@@ -77,6 +77,8 @@ void Minesweeper::RunGameState()
 bool Minesweeper::Run()
 {
 
+    RunGameState();
+
     bool result = true;
     Action action = userInput_->PollEvent();
     if (action.actionType_ == ActionType::Close)
@@ -123,8 +125,6 @@ bool Minesweeper::Run()
         userInput_->OnGameWon();
         gState_ = GameState::gameWon;
     }
-
-    RunGameState();
 
     return result;
 }

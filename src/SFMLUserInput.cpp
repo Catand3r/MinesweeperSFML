@@ -27,7 +27,7 @@ void SFMLUserInput::OnGameWon()
     UpdateWonText();
 }
 
-bool SFMLUserInput::Init(const Cells &cells, const MinePositions &minePositions, const int &flagAmount)
+bool SFMLUserInput::Init(const Cells &cells, const MinePositions &, const int &flagAmount)
 {
     if (!font_.loadFromFile("../fonts/comic.ttf"))
     {
@@ -40,7 +40,6 @@ bool SFMLUserInput::Init(const Cells &cells, const MinePositions &minePositions,
     music_.play();
 
     cells_ = &cells;
-    minePositions_ = &minePositions;
     int windowSizeX = static_cast<int>(cells_->size()) * 40;
     int windowSizeY = (static_cast<int>(cells_->at(0).size()) * 40) + 40;
     window_.setSize(sf::Vector2u(windowSizeX, windowSizeY));

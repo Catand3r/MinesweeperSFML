@@ -56,8 +56,6 @@ class SFMLUserInput : public IUserInput
 
     const Cells *cells_ = nullptr;
 
-    const MinePositions *minePositions_ = nullptr;
-
     const int *flagAmount_;
 
     float cellSize_ = 20.0f;
