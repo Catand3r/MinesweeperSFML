@@ -1,4 +1,5 @@
 #include "GameState.h"
+#include "Minesweeper.h"
 #include <array>
 #include <string>
 
@@ -28,12 +29,12 @@ GameStateManager::~GameStateManager()
     }
 }
 
-void GameStateManager::RunCurrentState()
+void GameStateManager::RunCurrentState(Minesweeper *ms, const Action &action)
 {
     GameStates::iterator arrayIt =
         *currentState_;          // WskaŸnik na element tablicy (którym jest GameState*) aka GameState**
     GameState *state = *arrayIt; // Konkretny wskaŸnik na GameState
-    if (state->Run() == RunResult::SwitchToNext)
+    if (state->Run(ms, action) == RunResult::SwitchToNext)
         currentState_++;
 }
 
@@ -62,8 +63,23 @@ void RunningFirstCheck::OnEntry()
 {
 }
 
-RunResult RunningFirstCheck::Run()
+RunResult RunningFirstCheck::Run(Minesweeper *ms, const Action &action)
 {
+    (*ms).CreateEmptyBoard((*ms).boardSizeX_, (*ms).boardSizeY_);
+    (*ms).CreateEmptyMinePositions();
+    (*ms).flagAmount_ = (*ms).mineAmount_;
+    (*ms).firstCheck_ = true;
+    (*ms).userInput_->Init((*ms).cells_, (*ms).minePostitions_, (*ms).flagAmount_);
+    (*ms).userInput_->DrawGameNotRunning();
+    auto [x, y] = action.playerPos_;
+    if (action.actionType_ == ActionType::CheckCell)
+    {
+        (*ms).firstCheck_ = false;
+        (*ms).minePostitions_ = (*ms).randomEngine_->RandomizeMinePlacement((*ms).cells_, (*ms).mineAmount_, x, y);
+        (*ms).PlaceMines();
+    }
+    if (!(*ms).firstCheck_)
+        return RunResult::SwitchToNext;
     return RunResult::Stay;
 }
 
@@ -71,8 +87,19 @@ void Running::OnEntry()
 {
 }
 
-RunResult Running::Run()
+RunResult Running::Run(Minesweeper *ms, const Action &action)
 {
+    (*ms).userInput_->DrawGameRunning();
+    if ((*ms).gameWon_ && !(*ms).gameLost_)
+    {
+        PutNextState(wonState_);
+        return RunResult::SwitchToNext;
+    }
+    else if ((*ms).gameLost_ && !(*ms).gameWon_)
+    {
+        PutNextState(lostState_);
+        return RunResult::SwitchToNext;
+    }
     return RunResult::Stay;
 }
 
@@ -90,8 +117,12 @@ void Lost::OnEntry()
 {
 }
 
-RunResult Lost::Run()
+RunResult Lost::Run(Minesweeper *ms, const Action &action)
 {
+    (*ms).UncoverAllMines();
+    (*ms).userInput_->DrawGameNotRunning();
+    if (action.actionType_ == ActionType::Restart)
+        return RunResult::SwitchToNext;
     return RunResult::Stay;
 }
 
@@ -99,7 +130,10 @@ void Won::OnEntry()
 {
 }
 
-RunResult Won::Run()
+RunResult Won::Run(Minesweeper *ms, const Action &action)
 {
+    (*ms).userInput_->DrawGameNotRunning();
+    if (action.actionType_ == ActionType::Restart)
+        return RunResult::SwitchToNext;
     return RunResult::Stay;
 }

@@ -1,3 +1,5 @@
+
+#pragma once
 #include <array>
 #include <string>
 #include <vector>
@@ -9,6 +11,8 @@ enum class RunResult
 };
 
 class GameState;
+class Minesweeper;
+struct Action;
 
 class GameStateManager
 {
@@ -32,8 +36,7 @@ class GameStateManager
   public:
     GameStateManager();
     ~GameStateManager();
-    void RunCurrentState();
-    void SwitchCurrentState();
+    void RunCurrentState(Minesweeper *, const Action &);
 
   private:
     GameStates gameStates_;
@@ -48,7 +51,7 @@ class GameState
     using GameStateIterator = GameStateManager::GameStatesIterator;
 
   public:
-    virtual RunResult Run() = 0;
+    virtual RunResult Run(Minesweeper *, const Action &) = 0;
     virtual GameStateArrayIt GetNextState(GameStateArrayIt currentState)
     {
         currentState++;
@@ -66,7 +69,7 @@ class GameState
 class RunningFirstCheck : public GameState
 {
   public:
-    RunResult Run() override;
+    RunResult Run(Minesweeper *, const Action &) override;
 
   private:
     void OnEntry() override;
@@ -75,7 +78,7 @@ class RunningFirstCheck : public GameState
 class Running : public GameState
 {
   public:
-    RunResult Run() override;
+    RunResult Run(Minesweeper *, const Action &) override;
     void PutLostState(GameStateArrayIt);
     void PutWonState(GameStateArrayIt);
     GameStateArrayIt GetNextState(GameStateArrayIt) override
@@ -93,7 +96,7 @@ class Running : public GameState
 class Lost : public GameState
 {
   public:
-    RunResult Run() override;
+    RunResult Run(Minesweeper *, const Action &) override;
     GameStateArrayIt GetNextState(GameStateArrayIt) override
     {
         return nextState_;
@@ -106,7 +109,7 @@ class Lost : public GameState
 class Won : public GameState
 {
   public:
-    RunResult Run() override;
+    RunResult Run(Minesweeper *, const Action &) override;
     GameStateArrayIt GetNextState(GameStateArrayIt) override
     {
         return nextState_;

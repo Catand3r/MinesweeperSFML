@@ -49,7 +49,7 @@ void Minesweeper::RunGameState()
 {
     switch (gState_)
     {
-    case GameState::gameRunningFirstCheck: {
+    case GameStateEnum::gameRunningFirstCheck: {
         CreateEmptyBoard(boardSizeX_, boardSizeY_);
         CreateEmptyMinePositions();
         flagAmount_ = mineAmount_;
@@ -58,16 +58,16 @@ void Minesweeper::RunGameState()
         userInput_->DrawGameNotRunning();
         break;
     }
-    case GameState::gameRunning: {
+    case GameStateEnum::gameRunning: {
         userInput_->DrawGameRunning();
         break;
     }
-    case GameState::gameLost: {
+    case GameStateEnum::gameLost: {
         UncoverAllMines();
         userInput_->DrawGameNotRunning();
         break;
     }
-    case GameState::gameWon: {
+    case GameStateEnum::gameWon: {
         userInput_->DrawGameNotRunning();
         break;
     }
@@ -76,11 +76,11 @@ void Minesweeper::RunGameState()
 
 bool Minesweeper::Run()
 {
-
     RunGameState();
 
     bool result = true;
     Action action = userInput_->PollEvent();
+    gStateManager_.RunCurrentState(this, action);
     if (action.actionType_ == ActionType::Close)
     {
         result = false;
@@ -92,7 +92,7 @@ bool Minesweeper::Run()
     }
     else if (action.actionType_ == ActionType::Restart)
     {
-        gState_ = GameState::gameRunningFirstCheck;
+        gState_ = GameStateEnum::gameRunningFirstCheck;
         result = true;
     }
     else if (action.actionType_ == ActionType::CheckCell || action.actionType_ == ActionType::MarkCell)
@@ -108,7 +108,7 @@ bool Minesweeper::Run()
             minePostitions_ = randomEngine_->RandomizeMinePlacement(cells_, mineAmount_, x, y);
             PlaceMines();
             result = ExecuteCheckCell(x, y);
-            gState_ = GameState::gameRunning;
+            gState_ = GameStateEnum::gameRunning;
         }
         else if (action.actionType_ == ActionType::CheckCell && !firstCheck_)
         {
@@ -122,8 +122,9 @@ bool Minesweeper::Run()
 
     if (!firstCheck_ && IsGameWon())
     {
+        gameWon_ = true;
         userInput_->OnGameWon();
-        gState_ = GameState::gameWon;
+        gState_ = GameStateEnum::gameWon;
     }
 
     return result;
@@ -159,7 +160,8 @@ bool Minesweeper::ExecuteCheckCell(int x, int y)
     {
         userInput_->OnResultMine(x, y);
         cells_[x][y].SetUncovered();
-        gState_ = GameState::gameLost;
+        gameLost_ = true;
+        gState_ = GameStateEnum::gameLost;
     }
     else if (cells_[x][y].state != CellState::mine)
     {

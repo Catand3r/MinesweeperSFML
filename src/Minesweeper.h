@@ -1,4 +1,5 @@
 #pragma once
+#include "GameState.h"
 #include "RandomEngine.h"
 #include "UserInput.h"
 #include <array>
@@ -6,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-enum class GameState
+enum class GameStateEnum
 {
     gameRunningFirstCheck = 0,
     gameRunning,
@@ -22,12 +23,19 @@ enum class Result
 
 class Minesweeper
 {
+    friend RunningFirstCheck;
+    friend Running;
+    friend Lost;
+    friend Won;
+
   public:
     Minesweeper(IUserInput *userInput, IRandomEngine *randomEngine, int x, int y);
     bool Run();
 
   private:
-    GameState gState_ = GameState::gameRunningFirstCheck;
+    GameStateManager gStateManager_;
+
+    GameStateEnum gState_ = GameStateEnum::gameRunningFirstCheck;
 
     IUserInput *userInput_;
     IRandomEngine *randomEngine_;
@@ -48,6 +56,8 @@ class Minesweeper
     int mineAmount_;
     int flagAmount_;
     bool firstCheck_ = true;
+    bool gameWon_ = false;
+    bool gameLost_ = false;
 
     bool IsPositionInRange(int, int);
     int CheckAroundCell(int, int);

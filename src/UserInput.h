@@ -15,6 +15,8 @@ enum class ActionType
 
 struct Action
 {
+    // friend GameState;
+
   public:
     static Action CreateNoneAction()
     {
