@@ -11,6 +11,11 @@ GameStateManager::GameStateManager()
     GameState *lost = gameStates_[2];
     GameState *won = gameStates_[3];
 
+    for (auto gameState : gameStates_)
+    {
+        gameState->PutFirstState(gameStates_.begin());
+    }
+
     first->PutNextState(gameStates_.begin() + 1);
     if (Running *run = dynamic_cast<Running *>(running))
     {
@@ -29,12 +34,12 @@ GameStateManager::~GameStateManager()
     }
 }
 
-void GameStateManager::RunCurrentState(Minesweeper *ms, const Action &action)
+void GameStateManager::RunCurrentState(Minesweeper &ms, const Action &action)
 {
     GameStates::iterator arrayIt =
         *currentState_;          // WskaŸnik na element tablicy (którym jest GameState*) aka GameState**
     GameState *state = *arrayIt; // Konkretny wskaŸnik na GameState
-    if (state->Run(ms, action) == RunResult::SwitchToNext)
+    if (state->OnRun(ms, action) == RunResult::SwitchToNext)
         currentState_++;
 }
 
@@ -44,6 +49,8 @@ GameStateManager::GameStatesIterator::GameStatesIterator(GameStates::iterator ar
 
 GameStateManager::GameStatesIterator GameStateManager::GameStatesIterator::operator++(int)
 {
+    (*arrayIt_)->OnExit();
+
     arrayIt_ = (*arrayIt_)->GetNextState(arrayIt_);
 
     return *this;
@@ -59,45 +66,82 @@ void GameState::PutNextState(GameStateArrayIt nextState)
     nextState_ = nextState;
 }
 
-void RunningFirstCheck::OnEntry()
+RunResult GameState::OnRun(Minesweeper &ms, const Action &action)
 {
+    if (TryGameRestart(action))
+    {
+        return RunResult::SwitchToNext;
+    }
+
+    if (firstRun_)
+    {
+        firstRun_ = false;
+        return OnEntry(ms, action);
+    }
+    else
+        return Run(ms, action);
 }
 
-RunResult RunningFirstCheck::Run(Minesweeper *ms, const Action &action)
+bool GameState::TryGameRestart(const Action &action)
 {
-    (*ms).CreateEmptyBoard((*ms).boardSizeX_, (*ms).boardSizeY_);
-    (*ms).CreateEmptyMinePositions();
-    (*ms).flagAmount_ = (*ms).mineAmount_;
-    (*ms).firstCheck_ = true;
-    (*ms).userInput_->Init((*ms).cells_, (*ms).minePostitions_, (*ms).flagAmount_);
-    (*ms).userInput_->DrawGameNotRunning();
-    auto [x, y] = action.playerPos_;
-    if (action.actionType_ == ActionType::CheckCell)
+    if (action.actionType_ == ActionType::Restart)
     {
-        (*ms).firstCheck_ = false;
-        (*ms).minePostitions_ = (*ms).randomEngine_->RandomizeMinePlacement((*ms).cells_, (*ms).mineAmount_, x, y);
-        (*ms).PlaceMines();
+        PutNextState(firstState_);
+        return true;
     }
-    if (!(*ms).firstCheck_)
-        return RunResult::SwitchToNext;
+    return false;
+}
+
+RunResult RunningFirstCheck::OnEntry(Minesweeper &ms, const Action &action)
+{
+    ms.CreateEmptyBoard(ms.boardSizeX_, ms.boardSizeY_);
+    ms.userInput_->Init(ms.cells_, ms.flagAmount_);
+    ms.flagAmount_ = ms.mineAmount_;
     return RunResult::Stay;
 }
 
-void Running::OnEntry()
+RunResult RunningFirstCheck::Run(Minesweeper &ms, const Action &action)
 {
-}
-
-RunResult Running::Run(Minesweeper *ms, const Action &action)
-{
-    (*ms).userInput_->DrawGameRunning();
-    if ((*ms).gameWon_ && !(*ms).gameLost_)
+    ms.userInput_->DrawGameNotRunning();
+    auto [x, y] = action.playerPos_;
+    if (action.actionType_ == ActionType::CheckCell)
     {
-        PutNextState(wonState_);
+        auto minePositions = ms.randomEngine_->RandomizeMinePlacement(ms.cells_, ms.mineAmount_, x, y);
+        ms.PlaceMines(minePositions);
         return RunResult::SwitchToNext;
     }
-    else if ((*ms).gameLost_ && !(*ms).gameWon_)
+    return RunResult::Stay;
+}
+
+RunResult Running::OnEntry(Minesweeper &ms, const Action &action)
+{
+    return RunResult::Stay;
+}
+
+RunResult Running::Run(Minesweeper &ms, const Action &action)
+{
+    ms.userInput_->DrawGameRunning();
+
+    bool gameLost = false;
+
+    auto [x, y] = action.playerPos_;
+    if (x < 0 || x > ms.cells_.size() || y < 0 || y > ms.cells_[0].size())
+        throw std::out_of_range("User input is out of range\n");
+    else if (action.actionType_ == ActionType::CheckCell)
+        gameLost = !ms.ExecuteCheckCell(x, y);
+    else if (action.actionType_ == ActionType::MarkCell)
+        ms.ExecuteMarkCell(x, y);
+
+    if (ms.IsGameWon())
+    {
+        PutNextState(wonState_);
+
+        return RunResult::SwitchToNext;
+    }
+    else if (gameLost)
     {
         PutNextState(lostState_);
+
         return RunResult::SwitchToNext;
     }
     return RunResult::Stay;
@@ -113,27 +157,27 @@ void Running::PutWonState(GameStateArrayIt wonState)
     wonState_ = wonState;
 }
 
-void Lost::OnEntry()
+RunResult Lost::OnEntry(Minesweeper &ms, const Action &action)
 {
-}
-
-RunResult Lost::Run(Minesweeper *ms, const Action &action)
-{
-    (*ms).UncoverAllMines();
-    (*ms).userInput_->DrawGameNotRunning();
-    if (action.actionType_ == ActionType::Restart)
-        return RunResult::SwitchToNext;
+    // ms.userInput_->OnResultMine(x, y);
+    ms.UncoverAllMines();
     return RunResult::Stay;
 }
 
-void Won::OnEntry()
+RunResult Lost::Run(Minesweeper &ms, const Action &action)
 {
+    ms.userInput_->DrawGameNotRunning();
+    return RunResult::Stay;
 }
 
-RunResult Won::Run(Minesweeper *ms, const Action &action)
+RunResult Won::OnEntry(Minesweeper &ms, const Action &action)
 {
-    (*ms).userInput_->DrawGameNotRunning();
-    if (action.actionType_ == ActionType::Restart)
-        return RunResult::SwitchToNext;
+    ms.userInput_->OnGameWon();
+    return RunResult::Stay;
+}
+
+RunResult Won::Run(Minesweeper &ms, const Action &action)
+{
+    ms.userInput_->DrawGameNotRunning();
     return RunResult::Stay;
 }

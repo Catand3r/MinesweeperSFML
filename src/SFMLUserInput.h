@@ -27,7 +27,7 @@ class SFMLUserInput : public IUserInput
 
     virtual void OnGameWon() override;
 
-    virtual bool Init(const Cells &, const MinePositions &, const int &) override;
+    virtual bool Init(const Cells &, const int &) override;
 
     virtual Action PollEvent() override;
 

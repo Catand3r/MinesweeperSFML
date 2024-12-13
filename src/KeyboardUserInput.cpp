@@ -15,7 +15,7 @@ Action KeyboardUserInput::PollEvent()
     return action;
 }
 
-bool KeyboardUserInput::Init(const Cells &, const MinePositions &, const int &)
+bool KeyboardUserInput::Init(const Cells &, const int &)
 {
     return true;
 }

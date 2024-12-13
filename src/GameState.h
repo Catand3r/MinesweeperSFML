@@ -36,7 +36,7 @@ class GameStateManager
   public:
     GameStateManager();
     ~GameStateManager();
-    void RunCurrentState(Minesweeper *, const Action &);
+    void RunCurrentState(Minesweeper &, const Action &);
 
   private:
     GameStates gameStates_;
@@ -51,43 +51,61 @@ class GameState
     using GameStateIterator = GameStateManager::GameStatesIterator;
 
   public:
-    virtual RunResult Run(Minesweeper *, const Action &) = 0;
+    RunResult OnRun(Minesweeper &, const Action &);
+    virtual RunResult Run(Minesweeper &, const Action &) = 0;
     virtual GameStateArrayIt GetNextState(GameStateArrayIt currentState)
     {
         currentState++;
         return currentState;
     }
+    void OnExit()
+    {
+        firstRun_ = true;
+    }
 
     virtual void PutNextState(GameStateArrayIt);
 
+    void PutFirstState(GameStateArrayIt firstState)
+    {
+        firstState_ = firstState;
+    }
+
   protected:
+    bool firstRun_ = true;
+
     GameStateArrayIt nextState_;
+
+    GameStateArrayIt firstState_;
+
     std::string name_;
-    virtual void OnEntry() = 0;
+
+    virtual RunResult OnEntry(Minesweeper &, const Action &) = 0;
+
+    bool TryGameRestart(const Action &);
 };
 
 class RunningFirstCheck : public GameState
 {
   public:
-    RunResult Run(Minesweeper *, const Action &) override;
+    RunResult Run(Minesweeper &, const Action &) override;
 
   private:
-    void OnEntry() override;
+    RunResult OnEntry(Minesweeper &, const Action &) override;
 };
 
 class Running : public GameState
 {
   public:
-    RunResult Run(Minesweeper *, const Action &) override;
+    RunResult Run(Minesweeper &, const Action &) override;
     void PutLostState(GameStateArrayIt);
     void PutWonState(GameStateArrayIt);
     GameStateArrayIt GetNextState(GameStateArrayIt) override
     {
-        return wonState_;
+        return nextState_;
     }
 
   private:
-    void OnEntry() override;
+    RunResult OnEntry(Minesweeper &, const Action &) override;
 
     GameStateArrayIt lostState_;
     GameStateArrayIt wonState_;
@@ -96,25 +114,25 @@ class Running : public GameState
 class Lost : public GameState
 {
   public:
-    RunResult Run(Minesweeper *, const Action &) override;
+    RunResult Run(Minesweeper &, const Action &) override;
     GameStateArrayIt GetNextState(GameStateArrayIt) override
     {
         return nextState_;
     }
 
   private:
-    void OnEntry() override;
+    RunResult OnEntry(Minesweeper &, const Action &) override;
 };
 
 class Won : public GameState
 {
   public:
-    RunResult Run(Minesweeper *, const Action &) override;
+    RunResult Run(Minesweeper &, const Action &) override;
     GameStateArrayIt GetNextState(GameStateArrayIt) override
     {
         return nextState_;
     }
 
   private:
-    void OnEntry() override;
+    RunResult OnEntry(Minesweeper &, const Action &) override;
 };

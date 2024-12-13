@@ -3,12 +3,12 @@
 
 class KeyboardUserInput : public IUserInput
 {
-public:
+  public:
     ~KeyboardUserInput() override = default;
 
     Action PollEvent() override;
 
-    bool Init(const Cells&, const MinePositions&, const int&) override;
+    bool Init(const Cells &, const int &) override;
 
     void OnResultEmpty(int, int, int) override;
     void OnResultMine(int, int) override;

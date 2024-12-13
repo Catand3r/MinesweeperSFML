@@ -23,7 +23,6 @@ Minesweeper::Minesweeper(IUserInput *userInput, IRandomEngine *randomEngine, int
       mineAmount_(x * y * mineAmountIndex_)
 {
     CreateEmptyBoard(boardSizeX_, boardSizeY_);
-    CreateEmptyMinePositions();
 }
 
 void Minesweeper::CreateEmptyBoard(int x, int y)
@@ -40,94 +39,21 @@ void Minesweeper::CreateEmptyBoard(int x, int y)
     }
 }
 
-void Minesweeper::CreateEmptyMinePositions()
-{
-    minePostitions_.clear();
-}
-
-void Minesweeper::RunGameState()
-{
-    switch (gState_)
-    {
-    case GameStateEnum::gameRunningFirstCheck: {
-        CreateEmptyBoard(boardSizeX_, boardSizeY_);
-        CreateEmptyMinePositions();
-        flagAmount_ = mineAmount_;
-        firstCheck_ = true;
-        userInput_->Init(cells_, minePostitions_, flagAmount_);
-        userInput_->DrawGameNotRunning();
-        break;
-    }
-    case GameStateEnum::gameRunning: {
-        userInput_->DrawGameRunning();
-        break;
-    }
-    case GameStateEnum::gameLost: {
-        UncoverAllMines();
-        userInput_->DrawGameNotRunning();
-        break;
-    }
-    case GameStateEnum::gameWon: {
-        userInput_->DrawGameNotRunning();
-        break;
-    }
-    }
-}
-
 bool Minesweeper::Run()
 {
-    RunGameState();
-
     bool result = true;
     Action action = userInput_->PollEvent();
-    gStateManager_.RunCurrentState(this, action);
+    gStateManager_.RunCurrentState(*this, action);
     if (action.actionType_ == ActionType::Close)
     {
-        result = false;
+        return false;
     }
     else if (action.actionType_ == ActionType::None)
     {
         userInput_->Delay(100);
-        result = true;
+        return true;
     }
-    else if (action.actionType_ == ActionType::Restart)
-    {
-        gState_ = GameStateEnum::gameRunningFirstCheck;
-        result = true;
-    }
-    else if (action.actionType_ == ActionType::CheckCell || action.actionType_ == ActionType::MarkCell)
-    {
-        auto [x, y] = action.playerPos_;
-        if (x < 0 || x > cells_.size() || y < 0 || y > cells_[0].size())
-        {
-            throw std::out_of_range("User input is out of range\n");
-        }
-        if (action.actionType_ == ActionType::CheckCell && firstCheck_)
-        {
-            firstCheck_ = false;
-            minePostitions_ = randomEngine_->RandomizeMinePlacement(cells_, mineAmount_, x, y);
-            PlaceMines();
-            result = ExecuteCheckCell(x, y);
-            gState_ = GameStateEnum::gameRunning;
-        }
-        else if (action.actionType_ == ActionType::CheckCell && !firstCheck_)
-        {
-            result = ExecuteCheckCell(x, y);
-        }
-        else if (action.actionType_ == ActionType::MarkCell)
-        {
-            result = ExecuteMarkCell(x, y);
-        }
-    }
-
-    if (!firstCheck_ && IsGameWon())
-    {
-        gameWon_ = true;
-        userInput_->OnGameWon();
-        gState_ = GameStateEnum::gameWon;
-    }
-
-    return result;
+    return true;
 }
 
 bool Minesweeper::IsGameWon()
@@ -148,9 +74,13 @@ bool Minesweeper::IsGameWon()
 
 void Minesweeper::UncoverAllMines()
 {
-    for (const auto &[x, y] : minePostitions_)
+    for (int i = 0; i < cells_.size(); i++)
     {
-        cells_[x][y].SetUncovered();
+        for (int j = 0; j < cells_[i].size(); j++)
+        {
+            if (cells_[i][j].state == CellState::mine && !cells_[i][j].uncovered)
+                cells_[i][j].SetUncovered();
+        }
     }
 }
 
@@ -160,8 +90,7 @@ bool Minesweeper::ExecuteCheckCell(int x, int y)
     {
         userInput_->OnResultMine(x, y);
         cells_[x][y].SetUncovered();
-        gameLost_ = true;
-        gState_ = GameStateEnum::gameLost;
+        return false;
     }
     else if (cells_[x][y].state != CellState::mine)
     {
@@ -196,9 +125,9 @@ bool Minesweeper::ExecuteMarkCell(int x, int y)
     return true;
 }
 
-void Minesweeper::PlaceMines()
+void Minesweeper::PlaceMines(std::vector<std::pair<int, int>> minePositions)
 {
-    for (const auto &[x, y] : minePostitions_)
+    for (const auto &[x, y] : minePositions)
     {
         cells_[x][y].state = CellState::mine;
         cells_[x][y].SetCovered();

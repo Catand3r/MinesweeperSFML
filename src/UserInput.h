@@ -35,7 +35,7 @@ class IUserInput
   public:
     virtual ~IUserInput() = default;
 
-    virtual bool Init(const Cells &, const MinePositions &, const int &) = 0;
+    virtual bool Init(const Cells &, const int &) = 0;
 
     virtual void OnResultEmpty(int, int, int) = 0;
     virtual void OnResultMine(int, int) = 0;

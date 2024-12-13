@@ -27,7 +27,7 @@ void SFMLUserInput::OnGameWon()
     UpdateWonText();
 }
 
-bool SFMLUserInput::Init(const Cells &cells, const MinePositions &, const int &flagAmount)
+bool SFMLUserInput::Init(const Cells &cells, const int &flagAmount)
 {
     if (!font_.loadFromFile("../fonts/comic.ttf"))
     {
